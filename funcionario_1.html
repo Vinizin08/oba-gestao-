@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Euvi — Contagem Diária</title>
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --surface2: #252525;
+  --border: #2e2e2e;
+  --accent: #e8432d;
+  --accent2: #ff6b4a;
+  --green: #22c55e;
+  --text: #f2f2f2;
+  --muted: #888;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-text { font-size: 16px; font-weight: 700; }
+.logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.sync-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); background: var(--surface2); padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.unidade-row { display: flex; gap: 8px; }
+.unidade-btn { flex: 1; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--border); background: transparent; color: var(--muted); font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.unidade-btn.active-manoel { border-color: var(--accent); background: rgba(232,67,45,0.12); color: var(--accent2); }
+.unidade-btn.active-brilhante { border-color: #3b82f6; background: rgba(59,130,246,0.12); color: #3b82f6; }
+.whats-list-btn { width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; border: none; background: #25D366; color: white; font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.whats-list-btn:active { transform: scale(0.98); }
+.new-product-btn { width: 100%; margin-top: 8px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.new-product-btn:active { transform: scale(0.98); background: var(--border); }
+.cats-scroll { overflow-x: auto; padding: 12px 20px 0; display: flex; gap: 8px; scrollbar-width: none; }
+.cats-scroll::-webkit-scrollbar { display: none; }
+.cat-chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.cat-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+.search-wrap { padding: 10px 20px 0; }
+.search-box { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--font); font-size: 15px; padding: 11px 16px; outline: none; }
+.search-box:focus { border-color: var(--accent); }
+.lista-wrap { padding: 10px 20px 120px; }
+.cat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #444; font-weight: 600; padding: 16px 0 8px; }
+.produto-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.15s; }
+.produto-card.critico { border-color: rgba(232,67,45,0.4); }
+.produto-bar { height: 3px; background: var(--border); }
+.produto-bar-fill { height: 100%; transition: width 0.4s; }
+.produto-main { padding: 14px 16px 12px; display: flex; align-items: flex-start; gap: 12px; }
+.edit-btn { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
+.edit-btn:active { transform: scale(0.92); background: var(--border); }
+.produto-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.produto-info { flex: 1; }
+.produto-nome { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+.produto-status { font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.qty-controls { display: flex; align-items: center; gap: 10px; padding: 0 16px 14px; }
+.qty-btn { width: 48px; height: 48px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface2); color: var(--text); font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; flex-shrink: 0; user-select: none; }
+.qty-btn:active { transform: scale(0.92); }
+.qty-btn.minus { color: var(--accent2); border-color: rgba(232,67,45,0.3); }
+.qty-btn.plus { color: var(--green); border-color: rgba(34,197,94,0.3); }
+.qty-input-wrap { flex: 1; position: relative; }
+.qty-input { width: 100%; background: var(--surface2); border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-family: var(--font); font-size: 22px; font-weight: 700; text-align: center; padding: 10px 8px; outline: none; -moz-appearance: textfield; }
+.qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.qty-input:focus { border-color: var(--accent); }
+.qty-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.min-tag { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; min-width: 48px; }
+.min-tag span { display: block; font-weight: 600; font-size: 13px; }
+.fab-confirm { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; font-family: var(--font); font-size: 15px; font-weight: 700; padding: 16px 32px; border-radius: 50px; border: none; cursor: pointer; box-shadow: 0 8px 32px rgba(34,197,94,0.4); display: none; align-items: center; gap: 10px; z-index: 100; transition: all 0.2s; }
+.fab-confirm.visible { display: flex; }
+.fab-confirm:active { transform: translateX(-50%) scale(0.96); }
+.fab-count { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 2px 9px; font-size: 12px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.toast-mobile { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--surface); border: 1px solid var(--green); border-radius: 12px; padding: 12px 20px; font-size: 13px; font-weight: 600; z-index: 200; opacity: 0; transition: all 0.25s; white-space: nowrap; pointer-events: none; color: var(--green); }
+.toast-mobile.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; align-items: flex-end; }
+.overlay.open { display: flex; }
+.sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px 20px; width: 100%; border-top: 1px solid var(--border); }
+.sheet-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.sheet-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.sheet-list { max-height: 40vh; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 6px; }
+.sheet-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface2); border-radius: 10px; font-size: 13px; }
+.sheet-item-val { font-weight: 700; font-size: 14px; }
+.sheet-item-val.green { color: var(--green); }
+.sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+.sheet-btn { width: 100%; padding: 16px; border-radius: 14px; font-family: var(--font); font-size: 15px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s; }
+.sheet-btn:active { transform: scale(0.98); }
+.sheet-btn-confirm { background: var(--green); color: white; }
+.sheet-btn-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.whats-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; max-height: 280px; overflow-y: auto; color: #e0e0e0; margin-bottom: 16px; }
+.whats-item-check { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; font-size: 13px; background: rgba(232,67,45,0.06); border: 1px solid rgba(232,67,45,0.2); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">🍔</div>
+      <div>
+        <div class="logo-text">Euvi Gestão</div>
+        <div class="logo-sub">Contagem Diária</div>
+      </div>
+    </div>
+    <div class="sync-badge">
+      <div class="sync-dot"></div>
+      <span id="sync-label">Sincronizado</span>
+    </div>
+  </div>
+  <div class="unidade-row">
+    <button class="unidade-btn active-manoel" id="btn-manoel" onclick="selecionarUnidade('manoel')">🔴 Manoel</button>
+    <button class="unidade-btn" id="btn-brilhante" onclick="selecionarUnidade('brilhante')">🔵 Brilhante</button>
+  </div>
+  <button class="whats-list-btn" onclick="abrirListaWhats()">📲 Gerar Lista de Pedido WhatsApp</button>
+  <button class="new-product-btn" onclick="abrirNovoProduto()">+ Novo Produto</button>
+</div>
+
+<div class="cats-scroll" id="cats-scroll"></div>
+<div class="search-wrap">
+  <input class="search-box" placeholder="🔍  Buscar..." id="busca" oninput="filtrar()" />
+</div>
+<div class="lista-wrap" id="lista-wrap"></div>
+<button class="fab-confirm" id="fab-confirm" onclick="abrirConfirmacao()">✅ Salvar<span class="fab-count" id="fab-count">0</span></button>
+
+<div class="overlay" id="overlay-confirm">
+  <div class="sheet">
+    <div class="sheet-title">Confirmar?</div>
+    <div class="sheet-sub" id="sheet-data-label"></div>
+    <div class="sheet-list" id="sheet-list"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="salvarContagem()">✅ Confirmar</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlay()">Voltar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-whats">
+  <div class="sheet" style="max-height:85vh;overflow-y:auto;">
+    <div class="sheet-title">📲 Lista de Pedido</div>
+    <div class="sheet-sub" id="whats-data-label"></div>
+    <div class="whats-preview" id="whats-preview"></div>
+    <div id="whats-checklist" style="max-height:180px;overflow-y:auto;margin-bottom:16px;"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="abrirWhatsAppFuncionario()" style="background:#25D366;">💬 Abrir no WhatsApp</button>
+      <button class="sheet-btn" onclick="copiarListaFuncionario()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);">📋 Copiar Texto</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlayWhats()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-editar">
+  <div class="sheet">
+    <div class="sheet-title">✏️ Editar Produto</div>
+    <div class="sheet-sub" id="editar-loja-label"></div>
+    <input type="hidden" id="edit-id" />
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin:16px 0;">
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Nome</label>
+        <input type="text" id="edit-nome" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:15px;padding:12px;outline:none;" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Categoria</label>
+          <select id="edit-categoria" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="carnes">🥩 Carnes</option>
+            <option value="frios">🧀 Frios</option>
+            <option value="verduras">🥬 Verduras</option>
+            <option value="mercado">🛒 Mercado</option>
+            <option value="embalagem">📦 Embalagem</option>
+            <option value="bebidas">🍺 Bebidas</option>
+            <option value="outros">🔧 Outros</option>
+          </select>
+        </div>
+        <div style="width:100px;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Medida</label>
+          <select id="edit-medida" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="kg">kg</option>
+            <option value="un">un</option>
+            <option value="cx">cx</option>
+            <option value="fardo">fardo</option>
+            <option value="pct">pct</option>
+            <option value="L">L</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;" id="edit-minimo-label">Estoque mínimo</label>
+        <input type="number" id="edit-minimo" min="0" step="0.5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;padding:12px;outline:none;" />
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="salvarEdicaoProdutoFuncionario()">✅ Salvar</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlayEditar()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-novo-produto">
+  <div class="sheet">
+    <div class="sheet-title">+ Cadastrar Produto</div>
+    <div class="sheet-sub" id="novo-produto-loja-label"></div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin:16px 0;">
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Nome do Produto</label>
+        <input type="text" id="np-nome" placeholder="ex: Mussarela" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:15px;padding:12px;outline:none;" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Categoria</label>
+          <select id="np-categoria" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="carnes">🥩 Carnes</option>
+            <option value="frios">🧀 Frios</option>
+            <option value="verduras">🥬 Verduras</option>
+            <option value="mercado">🛒 Mercado</option>
+            <option value="embalagem">📦 Embalagem</option>
+            <option value="bebidas">🍺 Bebidas</option>
+            <option value="outros">🔧 Outros</option>
+          </select>
+        </div>
+        <div style="width:100px;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Medida</label>
+          <select id="np-medida" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="kg">kg</option>
+            <option value="un">un</option>
+            <option value="cx">cx</option>
+            <option value="fardo">fardo</option>
+            <option value="pct">pct</option>
+            <option value="L">L</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Estoque Inicial</label>
+          <input type="number" id="np-atual" placeholder="0" min="0" step="0.5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;padding:12px;outline:none;" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Estoque Mínimo</label>
+          <input type="number" id="np-minimo" placeholder="5" min="0" step="0.5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;padding:12px;outline:none;" />
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Disponível em</label>
+        <select id="np-unidade" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+          <option value="ambos">🔴🔵 Ambas as lojas</option>
+          <option value="manoel">🔴 Somente Manoel</option>
+          <option value="brilhante">🔵 Somente Brilhante</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="cadastrarProdutoFuncionario()">✅ Cadastrar</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlayNovoProduto()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-mobile" id="toast-mobile"></div>
+
+<script>
+const STORAGE_KEY = 'oba-state';
+let state = { produtos: [] };
+let unidadeAtiva = 'manoel';
+let categoriaAtiva = 'todas';
+let alteracoes = {};
+
+let produtosIniciais = [
+  { id:1,  nome:'Hambúrguer Tradicional', categoria:'carnes',    medida:'kg',    atual:15, minimo:20, unidade:'ambos' },
+  { id:2,  nome:'Picadinho',              categoria:'carnes',    medida:'un',    atual:8,  minimo:20, unidade:'ambos' },
+  { id:3,  nome:'Filé de Frango',         categoria:'carnes',    medida:'un',    atual:5,  minimo:10, unidade:'ambos' },
+  { id:4,  nome:'Ponta de Costela',       categoria:'carnes',    medida:'un',    atual:0,  minimo:20, unidade:'ambos' },
+  { id:5,  nome:'Mignon',                 categoria:'carnes',    medida:'un',    atual:2,  minimo:5,  unidade:'ambos' },
+  { id:6,  nome:'Mussarela',              categoria:'frios',     medida:'kg',    atual:8,  minimo:10, unidade:'ambos' },
+  { id:7,  nome:'Presunto',               categoria:'frios',     medida:'kg',    atual:6,  minimo:8,  unidade:'ambos' },
+  { id:8,  nome:'Bacon',                  categoria:'frios',     medida:'kg',    atual:12, minimo:10, unidade:'ambos' },
+  { id:9,  nome:'Calabresa',              categoria:'frios',     medida:'kg',    atual:3,  minimo:5,  unidade:'ambos' },
+  { id:10, nome:'Catupiry',               categoria:'frios',     medida:'un',    atual:2,  minimo:3,  unidade:'ambos' },
+  { id:11, nome:'Alface',                 categoria:'verduras',  medida:'cx',    atual:0,  minimo:1,  unidade:'ambos' },
+  { id:12, nome:'Tomate',                 categoria:'verduras',  medida:'cx',    atual:1,  minimo:1,  unidade:'ambos' },
+  { id:13, nome:'Rúcula',                 categoria:'verduras',  medida:'un',    atual:1,  minimo:3,  unidade:'ambos' },
+  { id:14, nome:'Cebolinha',              categoria:'verduras',  medida:'un',    atual:2,  minimo:3,  unidade:'ambos' },
+  { id:15, nome:'Cebola Branca',          categoria:'verduras',  medida:'kg',    atual:3,  minimo:4,  unidade:'ambos' },
+  { id:16, nome:'Cebola Roxa',            categoria:'verduras',  medida:'kg',    atual:1,  minimo:2,  unidade:'ambos' },
+  { id:17, nome:'Batata Crinkle',         categoria:'mercado',   medida:'cx',    atual:4,  minimo:5,  unidade:'ambos' },
+  { id:18, nome:'Batata Palha',           categoria:'mercado',   medida:'un',    atual:6,  minimo:6,  unidade:'ambos' },
+  { id:19, nome:'Óleo',                   categoria:'mercado',   medida:'cx',    atual:2,  minimo:2,  unidade:'ambos' },
+  { id:20, nome:'Macarrão',               categoria:'mercado',   medida:'un',    atual:3,  minimo:5,  unidade:'ambos' },
+];
+
+const catIcons = { carnes:'🥩', frios:'🧀', verduras:'🥬', mercado:'🛒', embalagem:'📦', bebidas:'🍺', outros:'🔧' };
+const catBg = { carnes:'rgba(232,67,45,0.12)', frios:'rgba(59,130,246,0.12)', verduras:'rgba(34,197,94,0.12)', mercado:'rgba(245,166,35,0.12)', embalagem:'rgba(136,136,136,0.12)' };
+
+function loadState() {
+  // Carregar do estado compartilhado (oba-state)
+  const s = localStorage.getItem('oba-state');
+  if (s) {
+    try {
+      const parsed = JSON.parse(s);
+      state.produtos = parsed.produtos || produtosIniciais;
+    } catch(e) { 
+      state.produtos = [...produtosIniciais]; 
+    }
+  } else {
+    // Se não existir, criar com dados iniciais
+    state.produtos = produtosIniciais.map(p => {
+      if (p.lojas) return p; // Já migrado
+      
+      // Converter formato legado para novo
+      const lojas = {};
+      ['manoel', 'brilhante'].forEach(loja => {
+        if (p.unidade === loja || p.unidade === 'ambos') {
+          lojas[loja] = { ativo: true, atual: p.atual, minimo: p.minimo };
+        } else {
+          lojas[loja] = { ativo: false, atual: 0, minimo: 0 };
+        }
+      });
+      
+      const { atual, minimo, unidade, ...rest } = p;
+      return { ...rest, lojas };
+    });
+    
+    // Salvar estado inicial
+    saveState();
+  }
+}
+
+function saveState() {
+  // Salvar no estado compartilhado (oba-state)
+  const s = JSON.parse(localStorage.getItem('oba-state') || '{}');
+  s.produtos = state.produtos;
+  localStorage.setItem('oba-state', JSON.stringify(s));
+}
+
+function init() {
+  loadState();
+  renderCategorias();
+  renderLista();
+  setInterval(() => {
+    const antes = JSON.stringify(state.produtos.map(p=>p.atual));
+    loadState();
+    const depois = JSON.stringify(state.produtos.map(p=>p.atual));
+    if (antes !== depois) renderLista();
+  }, 5000);
+}
+
+function selecionarUnidade(unid) {
+  if (Object.keys(alteracoes).length > 0) {
+    if (!confirm('Tem alterações! Continuar?')) return;
+  }
+  unidadeAtiva = unid;
+  alteracoes = {};
+  document.getElementById('btn-manoel').className = 'unidade-btn' + (unid==='manoel' ? ' active-manoel' : '');
+  document.getElementById('btn-brilhante').className = 'unidade-btn' + (unid==='brilhante' ? ' active-brilhante' : '');
+  renderLista();
+  atualizarFAB();
+}
+
+function getProdutosDaUnidade() {
+  return state.produtos.filter(p => {
+    if (!p.lojas) {
+      // Formato legado
+      return p.unidade === 'ambos' || p.unidade === unidadeAtiva;
+    }
+    // Novo formato
+    const est = p.lojas[unidadeAtiva];
+    return est && est.ativo;
+  });
+}
+
+function renderCategorias() {
+  const cats = ['todas', ...new Set(produtosIniciais.map(p => p.categoria))];
+  const scroll = document.getElementById('cats-scroll');
+  scroll.innerHTML = cats.map(c => `<div class="cat-chip ${c === categoriaAtiva ? 'active' : ''}" onclick="selecionarCat('${c}')">${c === 'todas' ? '🗂' : (catIcons[c]||'')} ${c === 'todas' ? 'Todos' : c}</div>`).join('');
+}
+
+function selecionarCat(cat) {
+  categoriaAtiva = cat;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  renderLista();
+}
+
+function filtrar() {
+  renderLista();
+}
+
+function renderLista() {
+  const busca = (document.getElementById('busca')?.value || '').toLowerCase().trim();
+  let produtos = getProdutosDaUnidade();
+  if (categoriaAtiva !== 'todas') produtos = produtos.filter(p => p.categoria === categoriaAtiva);
+  if (busca) produtos = produtos.filter(p => p.nome.toLowerCase().includes(busca));
+  produtos.sort((a, b) => {
+    const aCrit = a.atual < a.minimo ? 0 : 1;
+    const bCrit = b.atual < b.minimo ? 0 : 1;
+    return aCrit - bCrit;
+  });
+
+  const wrap = document.getElementById('lista-wrap');
+  if (produtos.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">📦</div>Nenhum encontrado</div>`;
+    return;
+  }
+
+  let html = '';
+  if (categoriaAtiva === 'todas' && !busca) {
+    const grupos = {};
+    produtos.forEach(p => {
+      if (!grupos[p.categoria]) grupos[p.categoria] = [];
+      grupos[p.categoria].push(p);
+    });
+    Object.entries(grupos).forEach(([cat, prods]) => {
+      html += `<div class="cat-label">${catIcons[cat]||''} ${cat}</div>`;
+      prods.forEach(p => { html += renderCard(p); });
+    });
+  } else {
+    produtos.forEach(p => { html += renderCard(p); });
+  }
+
+  wrap.innerHTML = html;
+}
+
+function renderCard(p) {
+  // Obter valores da loja correta
+  let atual, minimo;
+  if (p.lojas) {
+    const est = p.lojas[unidadeAtiva] || { atual: 0, minimo: 0 };
+    atual = est.atual;
+    minimo = est.minimo;
+  } else {
+    // Legado
+    atual = p.atual;
+    minimo = p.minimo;
+  }
+  
+  const valorAtual = alteracoes[p.id]?.depois ?? atual;
+  const pct = Math.min(100, Math.round((valorAtual / Math.max(minimo * 1.5, 1)) * 100));
+  const cor = valorAtual === 0 ? '#e8432d' : valorAtual < minimo ? '#f5a623' : '#22c55e';
+  const statusTxt = valorAtual === 0 ? '🚨 Zerado' : valorAtual < minimo ? `⚠️ Pedir ${minimo - valorAtual}` : '✅ OK';
+  const icon = catIcons[p.categoria] || '📦';
+  const bg = catBg[p.categoria] || 'rgba(136,136,136,0.12)';
+
+  return `<div class="produto-card ${valorAtual < minimo ? 'critico' : ''}" id="card-${p.id}">
+    <div class="produto-bar"><div class="produto-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+    <div class="produto-main">
+      <div class="produto-icon" style="background:${bg}">${icon}</div>
+      <div class="produto-info">
+        <div class="produto-nome">${p.nome}</div>
+        <div class="produto-status"><div class="status-dot" style="background:${cor}"></div><span style="color:${cor};font-weight:500;font-size:12px">${statusTxt}</span></div>
+      </div>
+      <button class="edit-btn" onclick="abrirEditarProdutoFuncionario(${p.id})" title="Editar produto">✏️</button>
+    </div>
+    <div class="qty-controls">
+      <button class="qty-btn minus" onclick="ajustar(${p.id}, -1)">−</button>
+      <div class="qty-input-wrap">
+        <input type="number" class="qty-input" id="qty-${p.id}" value="${valorAtual}" min="0" step="0.5" onchange="setValor(${p.id}, this.value)" onfocus="this.select()" style="border-color:${alteracoes[p.id] ? 'var(--green)' : (valorAtual < minimo ? 'var(--accent)' : 'var(--border)')}" />
+        <div class="qty-label">${p.medida}</div>
+      </div>
+      <button class="qty-btn plus" onclick="ajustar(${p.id}, 1)">+</button>
+      <div class="min-tag">mín.<span style="color:${cor}">${minimo}</span></div>
+    </div>
+  </div>`;
+}
+
+function ajustar(id, delta) {
+  const p = state.produtos.find(x => x.id === id);
+  if (!p) return;
+  
+  // Obter valor atual da loja
+  let atual;
+  if (p.lojas) {
+    const est = p.lojas[unidadeAtiva] || { atual: 0 };
+    atual = est.atual;
+  } else {
+    atual = p.atual;
+  }
+  
+  const antes = alteracoes[id]?.antes ?? atual;
+  const valorAnterior = alteracoes[id]?.depois ?? atual;
+  const novo = Math.max(0, +(valorAnterior + delta).toFixed(1));
+  alteracoes[id] = { antes, depois: novo, nome: p.nome, medida: p.medida };
+  
+  const card = document.getElementById(`card-${id}`);
+  if (card) {
+    const frag = document.createElement('div');
+    frag.innerHTML = renderCard(p);
+    card.replaceWith(frag.firstElementChild);
+  }
+  atualizarFAB();
+}
+
+function setValor(id, valor) {
+  const p = state.produtos.find(x => x.id === id);
+  if (!p) return;
+  
+  // Obter valor atual da loja
+  let atual;
+  if (p.lojas) {
+    const est = p.lojas[unidadeAtiva] || { atual: 0 };
+    atual = est.atual;
+  } else {
+    atual = p.atual;
+  }
+  
+  const antes = alteracoes[id]?.antes ?? atual;
+  const novo = Math.max(0, parseFloat(valor) || 0);
+  alteracoes[id] = { antes, depois: novo, nome: p.nome, medida: p.medida };
+  atualizarFAB();
+}
+
+function atualizarFAB() {
+  const n = Object.keys(alteracoes).length;
+  const fab = document.getElementById('fab-confirm');
+  document.getElementById('fab-count').textContent = n;
+  fab.className = 'fab-confirm' + (n > 0 ? ' visible' : '');
+}
+
+function abrirConfirmacao() {
+  const itens = Object.entries(alteracoes).map(([id, dados]) => {
+    const p = state.produtos.find(x => x.id === parseInt(id));
+    let minimo = dados.medida;
+    if (p && p.lojas) {
+      const est = p.lojas[unidadeAtiva];
+      minimo = est?.minimo || 0;
+    } else if (p) {
+      minimo = p.minimo || 0;
+    }
+    return { id: parseInt(id), ...dados, minimo };
+  });
+  
+  if (itens.length === 0) return;
+  const now = new Date().toLocaleString('pt-BR');
+  document.getElementById('sheet-data-label').textContent = `${unidadeAtiva === 'manoel' ? '🔴 Manoel' : '🔵 Brilhante'} — ${now}`;
+  document.getElementById('sheet-list').innerHTML = itens.map(item => {
+    const delta = item.depois - item.antes;
+    const corVal = delta >= 0 ? 'green' : '';
+    const avisoMinimo = item.depois < item.minimo ? ` ⚠️ Abaixo de ${item.minimo}` : '';
+    return `<div class="sheet-item"><div><div style="font-weight:500">${item.nome}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${item.antes}${item.medida} → ${item.depois}${item.medida}${avisoMinimo}</div></div><div class="sheet-item-val ${corVal}">${delta >= 0 ? '+' : ''}${delta.toFixed(1)}</div></div>`;
+  }).join('');
+  document.getElementById('overlay-confirm').classList.add('open');
+}
+
+function fecharOverlay() {
+  document.getElementById('overlay-confirm').classList.remove('open');
+}
+
+function salvarContagem() {
+  // Carregar estado compartilhado
+  const stored = JSON.parse(localStorage.getItem('oba-state') || '{}');
+  
+  // Aplicar alterações ao estado central (respeitando a estrutura nova com lojas)
+  Object.entries(alteracoes).forEach(([id, dados]) => {
+    const p = stored.produtos?.find(x => x.id === parseInt(id));
+    if (p) {
+      if (p.lojas) {
+        // Nova estrutura com lojas
+        if (!p.lojas[unidadeAtiva]) p.lojas[unidadeAtiva] = { ativo: true };
+        p.lojas[unidadeAtiva].atual = dados.depois;
+      } else {
+        // Legado
+        p.atual = dados.depois;
+      }
+    }
+  });
+
+  // Salvar estado compartilhado
+  localStorage.setItem('oba-state', JSON.stringify(stored));
+  
+  // Carregar para sincronizar local também
+  loadState();
+
+  fecharOverlay();
+  const n = Object.keys(alteracoes).length;
+  alteracoes = {};
+  atualizarFAB();
+
+  document.getElementById('sync-label').textContent = 'Salvo!';
+  setTimeout(() => { document.getElementById('sync-label').textContent = 'Sincronizado'; }, 3000);
+
+  showToast(`✅ ${n} item(s) sincronizado(s)!`);
+  renderLista();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast-mobile');
+  t.textContent = msg;
+  t.className = 'toast-mobile show';
+  setTimeout(() => { t.className = 'toast-mobile'; }, 3000);
+}
+
+document.getElementById('overlay-confirm').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay-confirm')) fecharOverlay();
+});
+
+// ==================== LISTA WHATSAPP (FUNCIONÁRIO) ====================
+let whatsSelecionados = {};
+
+function abrirListaWhats() {
+  whatsSelecionados = {};
+  
+  // Pré-selecionar itens críticos da unidade ativa
+  const produtos = getProdutosDaUnidade();
+  produtos.forEach(p => {
+    let atual, minimo;
+    if (p.lojas) {
+      const est = p.lojas[unidadeAtiva] || { atual: 0, minimo: 0 };
+      atual = est.atual;
+      minimo = est.minimo;
+    } else {
+      atual = p.atual;
+      minimo = p.minimo;
+    }
+    if (atual < minimo) {
+      whatsSelecionados[p.id] = true;
+    }
+  });
+  
+  renderListaWhats();
+  document.getElementById('whats-data-label').textContent = `${unidadeAtiva === 'manoel' ? '🔴 Manoel' : '🔵 Brilhante'} — ${new Date().toLocaleDateString('pt-BR')}`;
+  document.getElementById('overlay-whats').classList.add('open');
+}
+
+function fecharOverlayWhats() {
+  document.getElementById('overlay-whats').classList.remove('open');
+}
+
+function getItensCriticosDaUnidade() {
+  const produtos = getProdutosDaUnidade();
+  return produtos.map(p => {
+    let atual, minimo;
+    if (p.lojas) {
+      const est = p.lojas[unidadeAtiva] || { atual: 0, minimo: 0 };
+      atual = est.atual;
+      minimo = est.minimo;
+    } else {
+      atual = p.atual;
+      minimo = p.minimo;
+    }
+    return { ...p, atual, minimo };
+  }).filter(p => p.atual < p.minimo);
+}
+
+function renderListaWhats() {
+  const criticos = getItensCriticosDaUnidade();
+  
+  const cl = document.getElementById('whats-checklist');
+  if (criticos.length === 0) {
+    cl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">✅ Nenhum item abaixo do mínimo</div>';
+  } else {
+    cl.innerHTML = criticos.map(p => {
+      const checked = whatsSelecionados[p.id] !== false;
+      const qtdPedir = Math.max(1, p.minimo - p.atual);
+      return `<label class="whats-item-check">
+        <input type="checkbox" ${checked?'checked':''} style="accent-color:var(--accent);flex-shrink:0;" onchange="toggleWhatsItem(${p.id}, this.checked)" />
+        <span style="flex:1;font-weight:500">${p.nome}</span>
+        <span style="font-family:var(--mono);color:var(--accent2);font-size:12px;">${qtdPedir}${p.medida}</span>
+      </label>`;
+    }).join('');
+  }
+  
+  atualizarPreviewWhatsFuncionario(criticos);
+}
+
+function toggleWhatsItem(id, checked) {
+  whatsSelecionados[id] = checked;
+  renderListaWhats();
+}
+
+const catIconsWhats = { carnes:'🥩', frios:'🧀', verduras:'🥬', mercado:'🛒', embalagem:'📦', bebidas:'🍺', outros:'🔧' };
+
+function atualizarPreviewWhatsFuncionario(criticos) {
+  const selecionados = criticos.filter(p => whatsSelecionados[p.id]);
+  const preview = document.getElementById('whats-preview');
+  
+  if (selecionados.length === 0) {
+    preview.textContent = 'Nenhum item selecionado.';
+    return;
+  }
+  
+  const data = new Date().toLocaleDateString('pt-BR');
+  const nomeUnid = unidadeAtiva === 'manoel' ? 'Manoel' : 'Brilhante';
+  
+  // Agrupar por categoria
+  const grupos = {};
+  selecionados.forEach(p => {
+    const catNome = p.categoria.charAt(0).toUpperCase() + p.categoria.slice(1);
+    const catIcon = catIconsWhats[p.categoria] || '📌';
+    const chaveGrupo = `${catIcon} ${catNome}`;
+    if (!grupos[chaveGrupo]) grupos[chaveGrupo] = [];
+    const qtdPedir = Math.max(1, p.minimo - p.atual);
+    grupos[chaveGrupo].push(`• ${p.nome} — tem ${p.atual}${p.medida}, pedir ${qtdPedir}${p.medida}`);
+  });
+  
+  let msg = `*📋 Lista ${nomeUnid} — ${data}*\n\n`;
+  Object.entries(grupos).forEach(([cat, items]) => {
+    msg += `*${cat}*\n`;
+    items.forEach(i => { msg += `${i}\n`; });
+    msg += '\n';
+  });
+  msg += `_👀 Euvi Gestão_`;
+  
+  preview.textContent = msg;
+}
+
+function copiarListaFuncionario() {
+  const txt = document.getElementById('whats-preview').textContent;
+  navigator.clipboard.writeText(txt).then(() => showToast('📋 Texto copiado!'));
+}
+
+function abrirWhatsAppFuncionario() {
+  const txt = document.getElementById('whats-preview').textContent;
+  const encoded = encodeURIComponent(txt);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+
+document.getElementById('overlay-whats').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay-whats')) fecharOverlayWhats();
+});
+
+// ==================== EDITAR PRODUTO (FUNCIONÁRIO) ====================
+function abrirEditarProdutoFuncionario(id) {
+  const p = state.produtos.find(x => x.id === id);
+  if (!p) return;
+
+  let minimo;
+  if (p.lojas) {
+    const est = p.lojas[unidadeAtiva] || { minimo: 0 };
+    minimo = est.minimo;
+  } else {
+    minimo = p.minimo;
+  }
+
+  document.getElementById('edit-id').value = p.id;
+  document.getElementById('edit-nome').value = p.nome;
+  document.getElementById('edit-categoria').value = p.categoria;
+  document.getElementById('edit-medida').value = p.medida;
+  document.getElementById('edit-minimo').value = minimo;
+  document.getElementById('edit-minimo-label').textContent = `Estoque mínimo (${unidadeAtiva === 'manoel' ? 'Manoel' : 'Brilhante'})`;
+  document.getElementById('editar-loja-label').textContent = `${unidadeAtiva === 'manoel' ? '🔴 Manoel' : '🔵 Brilhante'}`;
+
+  document.getElementById('overlay-editar').classList.add('open');
+}
+
+function fecharOverlayEditar() {
+  document.getElementById('overlay-editar').classList.remove('open');
+}
+
+function salvarEdicaoProdutoFuncionario() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const p = state.produtos.find(x => x.id === id);
+  if (!p) return;
+
+  const novoNome = document.getElementById('edit-nome').value.trim() || p.nome;
+  const novaCategoria = document.getElementById('edit-categoria').value;
+  const novaMedida = document.getElementById('edit-medida').value;
+  const novoMinimo = Math.max(0, parseFloat(document.getElementById('edit-minimo').value) || 0);
+
+  p.nome = novoNome;
+  p.categoria = novaCategoria;
+  p.medida = novaMedida;
+
+  if (p.lojas) {
+    if (!p.lojas[unidadeAtiva]) p.lojas[unidadeAtiva] = { ativo: true, atual: 0 };
+    p.lojas[unidadeAtiva].minimo = novoMinimo;
+  } else {
+    p.minimo = novoMinimo;
+  }
+
+  saveState();
+  fecharOverlayEditar();
+  renderLista();
+  showToast(`✅ ${novoNome} atualizado!`);
+}
+
+document.getElementById('overlay-editar').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay-editar')) fecharOverlayEditar();
+});
+
+// ==================== NOVO PRODUTO (FUNCIONÁRIO) ====================
+function abrirNovoProduto() {
+  document.getElementById('np-nome').value = '';
+  document.getElementById('np-categoria').value = 'carnes';
+  document.getElementById('np-medida').value = 'kg';
+  document.getElementById('np-atual').value = '';
+  document.getElementById('np-minimo').value = '';
+  document.getElementById('np-unidade').value = unidadeAtiva;
+  document.getElementById('novo-produto-loja-label').textContent = `Cadastrando com estoque inicial em ${unidadeAtiva === 'manoel' ? '🔴 Manoel' : '🔵 Brilhante'} (ajuste "Disponível em" se necessário)`;
+  document.getElementById('overlay-novo-produto').classList.add('open');
+}
+
+function fecharOverlayNovoProduto() {
+  document.getElementById('overlay-novo-produto').classList.remove('open');
+}
+
+function cadastrarProdutoFuncionario() {
+  const nome = document.getElementById('np-nome').value.trim();
+  const categoria = document.getElementById('np-categoria').value;
+  const medida = document.getElementById('np-medida').value;
+  const atual = Math.max(0, parseFloat(document.getElementById('np-atual').value) || 0);
+  const minimo = Math.max(0, parseFloat(document.getElementById('np-minimo').value) || 0);
+  const destino = document.getElementById('np-unidade').value;
+
+  if (!nome) {
+    showToast('⚠️ Digite o nome do produto');
+    return;
+  }
+
+  const id = Date.now();
+  const lojas = {};
+  ['manoel', 'brilhante'].forEach(loja => {
+    if (destino === 'ambos' || destino === loja) {
+      lojas[loja] = { ativo: true, atual, minimo };
+    } else {
+      lojas[loja] = { ativo: false, atual: 0, minimo: 0 };
+    }
+  });
+
+  state.produtos.push({ id, nome, categoria, medida, lojas });
+  saveState();
+  fecharOverlayNovoProduto();
+  renderCategorias();
+  renderLista();
+  showToast(`✅ ${nome} cadastrado!`);
+}
+
+document.getElementById('overlay-novo-produto').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay-novo-produto')) fecharOverlayNovoProduto();
+});
+
+init();
+</script>
+</body>
+</html>
