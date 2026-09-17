@@ -1,0 +1,9 @@
+const SUPABASE_URL = 'https://jrkmlyfsfdnytqolucre.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya21seWZzZmRueXRxb2x1Y3JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0NDI5ODAsImV4cCI6MjEwNTAxODk4MH0.UDPn2d7dLdvJkstgL3y4ptSOGdPfnGD-dhK-V4ghbXo';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { realtime: { params: { eventsPerSecond: 10 } } });
+function calcularPedido(produto, estoqueAtual) { const ideal=Number(produto.ideal_qty??0), atual=Number(estoqueAtual??0), unidadesAPedir=Math.max(0,ideal-atual); let kgAPedir=null; if(produto.weight_per_unit_g&&unidadesAPedir>0){kgAPedir=Math.round((unidadesAPedir*Number(produto.weight_per_unit_g)/1000)*1000)/1000;} return {unidadesAPedir,kgAPedir,precisaPedir:unidadesAPedir>0}; }
+function setSyncStatus(status){const el=document.getElementById('sync-status');if(!el)return;const map={online:{text:'Online',cls:'sync-online'},syncing:{text:'Sincronizando...',cls:'sync-syncing'},offline:{text:'Offline',cls:'sync-offline'},error:{text:'Erro de conexão',cls:'sync-offline'}};const s=map[status]||map.offline;el.textContent='● '+s.text;el.className='sync-badge '+s.cls;}
+window.addEventListener('online',()=>setSyncStatus('online'));window.addEventListener('offline',()=>setSyncStatus('offline'));
+async function registrarAuditoria({storeId,productId,action,oldValue,newValue}){const {data:{user}}=await supabaseClient.auth.getUser();await supabaseClient.from('audit_logs').insert({store_id:storeId,product_id:productId,user_id:user?.id,action,old_value:oldValue!=null?String(oldValue):null,new_value:newValue!=null?String(newValue):null});}
+async function logout(){await supabaseClient.auth.signOut();window.location.href='index.html';}
+async function exigirSessao(){const {data:{session}}=await supabaseClient.auth.getSession();if(!session){window.location.href='index.html';return null;}return session;}
