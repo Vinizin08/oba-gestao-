@@ -1,2 +1,324 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Euvi Gestão — Entrar</title><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0d0d0d"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>:root{--bg:#0d0d0d;--surface:#1e1e1e;--border:#2a2a2a;--accent:#e8432d;--accent2:#ff6b4a;--text:#f2f2f2;--muted:#8a8a8a}*{box-sizing:border-box}body{font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:100%;max-width:380px}.brand{text-align:center;margin-bottom:32px}.mark{width:56px;height:56px;margin:0 auto 12px;border-radius:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-size:26px;font-weight:800}.name{font-size:22px;font-weight:700}.sub{font-size:13px;color:var(--muted);margin-top:6px}.field{margin-bottom:15px}.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase}.field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;padding:13px 14px;outline:0}.field input:focus{border-color:var(--accent)}button{width:100%;border:0;border-radius:10px;padding:14px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;margin-top:6px}button:disabled{opacity:.6}.link{display:block;text-align:center;color:var(--accent2);text-decoration:none;font-size:13px;margin-top:16px}.msg{display:none;padding:11px 12px;border-radius:8px;margin-bottom:15px;font-size:13px}.msg.show{display:block}.error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5}.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}</style></head><body><main class="login-card"><div class="brand"><div class="mark">E</div><div class="name">Euvi Gestão</div><div class="sub">Controle inteligente de estoque</div></div><div id="msg" class="msg"></div><form id="form"><div class="field"><label>E-mail</label><input id="email" type="email" autocomplete="username" required></div><div class="field"><label>Senha</label><input id="senha" type="password" autocomplete="current-password" required></div><button id="btn" type="submit">Entrar</button></form><a class="link" href="reset-password.html">Esqueci minha senha</a><a class="link" href="cadastro.html">Ainda não tenho acesso → Criar cadastro</a><div class="footer">O administrador define sua loja e setor.</div></main><script src="config.js"></script><script>const msg=document.getElementById('msg'),btn=document.getElementById('btn');function show(t){msg.textContent=t;msg.className='msg show error'}async function route(){const {data:{user}}=await supabaseClient.auth.getUser();if(!user)return;const {data:p,error}=await supabaseClient.from('profiles').select('role,active').eq('id',user.id).single();if(error||!p){show('Perfil ainda não configurado. Fale com o administrador.');await supabaseClient.auth.signOut();return}if(!p.active){show('Seu acesso está desativado.');await supabaseClient.auth.signOut();return}location.href=p.role==='adm'?'admin.html':'funcionario.html'}document.getElementById('form').addEventListener('submit',async e=>{e.preventDefault();btn.disabled=true;btn.textContent='Entrando...';msg.className='msg';const {error}=await supabaseClient.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('senha').value});if(error){show(error.message.includes('Invalid login credentials')?'E-mail ou senha incorretos.':'Erro ao entrar: '+error.message);btn.disabled=false;btn.textContent='Entrar';return}await route()});supabaseClient.auth.getSession().then(({data})=>{if(data.session)route()});</script></body></html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Euvi — Contagem Diária</title>
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --surface2: #252525;
+  --border: #2e2e2e;
+  --accent: #e8432d;
+  --accent2: #ff6b4a;
+  --green: #22c55e;
+  --text: #f2f2f2;
+  --muted: #888;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-text { font-size: 16px; font-weight: 700; }
+.logo-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.sync-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); background: var(--surface2); padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.unidade-row { display: flex; gap: 8px; }
+.unidade-btn { flex: 1; padding: 8px 12px; border-radius: 8px; border: 2px solid var(--border); background: transparent; color: var(--muted); font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.unidade-btn.active-manoel { border-color: var(--accent); background: rgba(232,67,45,0.12); color: var(--accent2); }
+.unidade-btn.active-brilhante { border-color: #3b82f6; background: rgba(59,130,246,0.12); color: #3b82f6; }
+.whats-list-btn { width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; border: none; background: #25D366; color: white; font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.whats-list-btn:active { transform: scale(0.98); }
+.new-product-btn { width: 100%; margin-top: 8px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.new-product-btn:active { transform: scale(0.98); background: var(--border); }
+.cats-scroll { overflow-x: auto; padding: 12px 20px 0; display: flex; gap: 8px; scrollbar-width: none; }
+.cats-scroll::-webkit-scrollbar { display: none; }
+.cat-chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.cat-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+.search-wrap { padding: 10px 20px 0; }
+.search-box { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--font); font-size: 15px; padding: 11px 16px; outline: none; }
+.search-box:focus { border-color: var(--accent); }
+.lista-wrap { padding: 10px 20px 120px; }
+.cat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #444; font-weight: 600; padding: 16px 0 8px; }
+.produto-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.15s; }
+.produto-card.critico { border-color: rgba(232,67,45,0.4); }
+.produto-bar { height: 3px; background: var(--border); }
+.produto-bar-fill { height: 100%; transition: width 0.4s; }
+.produto-main { padding: 14px 16px 12px; display: flex; align-items: flex-start; gap: 12px; }
+.edit-btn { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
+.edit-btn:active { transform: scale(0.92); background: var(--border); }
+.produto-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.produto-info { flex: 1; }
+.produto-nome { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+.produto-status { font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.qty-controls { display: flex; align-items: center; gap: 10px; padding: 0 16px 14px; }
+.qty-btn { width: 48px; height: 48px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface2); color: var(--text); font-size: 22px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; flex-shrink: 0; user-select: none; }
+.qty-btn:active { transform: scale(0.92); }
+.qty-btn.minus { color: var(--accent2); border-color: rgba(232,67,45,0.3); }
+.qty-btn.plus { color: var(--green); border-color: rgba(34,197,94,0.3); }
+.qty-input-wrap { flex: 1; position: relative; }
+.qty-input { width: 100%; background: var(--surface2); border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-family: var(--font); font-size: 22px; font-weight: 700; text-align: center; padding: 10px 8px; outline: none; -moz-appearance: textfield; }
+.qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.qty-input:focus { border-color: var(--accent); }
+.qty-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.min-tag { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; min-width: 48px; }
+.min-tag span { display: block; font-weight: 600; font-size: 13px; }
+.fab-confirm { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; font-family: var(--font); font-size: 15px; font-weight: 700; padding: 16px 32px; border-radius: 50px; border: none; cursor: pointer; box-shadow: 0 8px 32px rgba(34,197,94,0.4); display: none; align-items: center; gap: 10px; z-index: 100; transition: all 0.2s; }
+.fab-confirm.visible { display: flex; }
+.fab-confirm:active { transform: translateX(-50%) scale(0.96); }
+.fab-count { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 2px 9px; font-size: 12px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.toast-mobile { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--surface); border: 1px solid var(--green); border-radius: 12px; padding: 12px 20px; font-size: 13px; font-weight: 600; z-index: 200; opacity: 0; transition: all 0.25s; white-space: nowrap; pointer-events: none; color: var(--green); }
+.toast-mobile.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; align-items: flex-end; }
+.overlay.open { display: flex; }
+.sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px 20px; width: 100%; border-top: 1px solid var(--border); }
+.sheet-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.sheet-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.sheet-list { max-height: 40vh; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 6px; }
+.sheet-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface2); border-radius: 10px; font-size: 13px; }
+.sheet-item-val { font-weight: 700; font-size: 14px; }
+.sheet-item-val.green { color: var(--green); }
+.sheet-actions { display: flex; flex-direction: column; gap: 10px; }
+.sheet-btn { width: 100%; padding: 16px; border-radius: 14px; font-family: var(--font); font-size: 15px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s; }
+.sheet-btn:active { transform: scale(0.98); }
+.sheet-btn-confirm { background: var(--green); color: white; }
+.sheet-btn-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.whats-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; max-height: 280px; overflow-y: auto; color: #e0e0e0; margin-bottom: 16px; }
+.whats-item-check { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; margin-bottom: 4px; font-size: 13px; background: rgba(232,67,45,0.06); border: 1px solid rgba(232,67,45,0.2); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">🍔</div>
+      <div>
+        <div class="logo-text">Euvi Gestão</div>
+        <div class="logo-sub">Contagem Diária</div>
+      </div>
+    </div>
+    <div class="sync-badge">
+      <div class="sync-dot"></div>
+      <span id="sync-label">Sincronizado</span>
+    </div>
+  </div>
+  <div class="unidade-row">
+    <button class="unidade-btn active-manoel" id="btn-manoel" onclick="selecionarUnidade('manoel')">🔴 Manoel</button>
+    <button class="unidade-btn" id="btn-brilhante" onclick="selecionarUnidade('brilhante')">🔵 Brilhante</button>
+  </div>
+  <button class="whats-list-btn" onclick="abrirListaWhats()">📲 Gerar Lista de Pedido WhatsApp</button>
+  <button class="new-product-btn" onclick="abrirNovoProduto()">+ Novo Produto</button>
+</div>
+
+<div class="cats-scroll" id="cats-scroll"></div>
+<div class="search-wrap">
+  <input class="search-box" placeholder="🔍  Buscar..." id="busca" oninput="filtrar()" />
+</div>
+<div class="lista-wrap" id="lista-wrap"></div>
+<button class="fab-confirm" id="fab-confirm" onclick="abrirConfirmacao()">✅ Salvar<span class="fab-count" id="fab-count">0</span></button>
+
+<div class="overlay" id="overlay-confirm">
+  <div class="sheet">
+    <div class="sheet-title">Confirmar?</div>
+    <div class="sheet-sub" id="sheet-data-label"></div>
+    <div class="sheet-list" id="sheet-list"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="salvarContagem()">✅ Confirmar</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlay()">Voltar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-whats">
+  <div class="sheet" style="max-height:85vh;overflow-y:auto;">
+    <div class="sheet-title">📲 Lista de Pedido</div>
+    <div class="sheet-sub" id="whats-data-label"></div>
+    <div class="whats-preview" id="whats-preview"></div>
+    <div id="whats-checklist" style="max-height:180px;overflow-y:auto;margin-bottom:16px;"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="abrirWhatsAppFuncionario()" style="background:#25D366;">💬 Abrir no WhatsApp</button>
+      <button class="sheet-btn" onclick="copiarListaFuncionario()" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);">📋 Copiar Texto</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlayWhats()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-editar">
+  <div class="sheet">
+    <div class="sheet-title">✏️ Editar Produto</div>
+    <div class="sheet-sub" id="editar-loja-label"></div>
+    <input type="hidden" id="edit-id" />
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin:16px 0;">
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Nome</label>
+        <input type="text" id="edit-nome" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:15px;padding:12px;outline:none;" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Categoria</label>
+          <select id="edit-categoria" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="carnes">🥩 Carnes</option>
+            <option value="frios">🧀 Frios</option>
+            <option value="verduras">🥬 Verduras</option>
+            <option value="mercado">🛒 Mercado</option>
+            <option value="embalagem">📦 Embalagem</option>
+            <option value="bebidas">🍺 Bebidas</option>
+            <option value="outros">🔧 Outros</option>
+          </select>
+        </div>
+        <div style="width:100px;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Medida</label>
+          <select id="edit-medida" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="kg">kg</option>
+            <option value="un">un</option>
+            <option value="cx">cx</option>
+            <option value="fardo">fardo</option>
+            <option value="pct">pct</option>
+            <option value="L">L</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;" id="edit-minimo-label">Estoque mínimo</label>
+        <input type="number" id="edit-minimo" min="0" step="0.5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;padding:12px;outline:none;" />
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="salvarEdicaoProdutoFuncionario()">✅ Salvar</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlayEditar()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-novo-produto">
+  <div class="sheet">
+    <div class="sheet-title">+ Cadastrar Produto</div>
+    <div class="sheet-sub" id="novo-produto-loja-label"></div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin:16px 0;">
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Nome do Produto</label>
+        <input type="text" id="np-nome" placeholder="ex: Mussarela" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:15px;padding:12px;outline:none;" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Categoria</label>
+          <select id="np-categoria" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="carnes">🥩 Carnes</option>
+            <option value="frios">🧀 Frios</option>
+            <option value="verduras">🥬 Verduras</option>
+            <option value="mercado">🛒 Mercado</option>
+            <option value="embalagem">📦 Embalagem</option>
+            <option value="bebidas">🍺 Bebidas</option>
+            <option value="outros">🔧 Outros</option>
+          </select>
+        </div>
+        <div style="width:100px;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Medida</label>
+          <select id="np-medida" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+            <option value="kg">kg</option>
+            <option value="un">un</option>
+            <option value="cx">cx</option>
+            <option value="fardo">fardo</option>
+            <option value="pct">pct</option>
+            <option value="L">L</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Estoque Inicial</label>
+          <input type="number" id="np-atual" placeholder="0" min="0" step="0.5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;padding:12px;outline:none;" />
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Estoque Mínimo</label>
+          <input type="number" id="np-minimo" placeholder="5" min="0" step="0.5" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:16px;font-weight:600;padding:12px;outline:none;" />
+        </div>
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Disponível em</label>
+        <select id="np-unidade" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font);font-size:14px;padding:12px;outline:none;">
+          <option value="ambos">🔴🔵 Ambas as lojas</option>
+          <option value="manoel">🔴 Somente Manoel</option>
+          <option value="brilhante">🔵 Somente Brilhante</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-confirm" onclick="cadastrarProdutoFuncionario()">✅ Cadastrar</button>
+      <button class="sheet-btn sheet-btn-cancel" onclick="fecharOverlayNovoProduto()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-mobile" id="toast-mobile"></div>
+
+<script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+// ==================== SUPABASE PERSISTENCE ====================
+(function(){
+  const TABLE = 'estoque';
+  const ROW_ID = 1;
+  let client = null;
+
+  function getClient(){
+    if (!client) client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return client;
+  }
+
+  function lojaDefault(){
+    return { ativo:false, atual:0, minimo:0 };
+  }
+
+  function normalizarProduto(raw){
+    const p = raw || {};
+    const lojas = { manoel: lojaDefault(), brilhante: lojaDefault() };
+
+    if (p.lojas && typeof p.lojas === 'object') {
+      ['manoel','brilhante'].forEach(loja => {
+        const src = p.lojas[loja] || {};
+        lojas[loja] = {
+          ativo: !!src.ativo,
+          atual: Number(src.atual) || 0,
+          minimo: Number(src.minimo) || 0
+        };
+      });
+    } else {
+      const unidade = p.unidade || 'ambos';
+      ['manoel','brilhante'].forEach(loja => {
+        const ativo = unidade === 'ambos' || unidade === loja;
+        lojas[loja] = {
+          ativo,
+          atual: ativo ? (Number(p.atual) || 0) : 0,
+          minimo: ativo ? (Number(p.minimo) || 0) : 0
+        };
+      });
