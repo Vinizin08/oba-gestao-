@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d"><title>Euvi Gestão — Frente / Bebidas</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./config.js"></script>
+<style>
+:root{--bg:#0d0d0d;--s:#1a1a1a;--s2:#252525;--b:#2e2e2e;--a:#e8432d;--g:#22c55e;--t:#f2f2f2;--m:#929292}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px Inter,system-ui,sans-serif}.head{padding:18px 16px;background:var(--s);border-bottom:1px solid var(--b);position:sticky;top:0;z-index:2}.brand{font-weight:800;font-size:19px}.muted{color:var(--m);font-size:12px;margin-top:4px}.wrap{max-width:760px;margin:auto;padding:16px 14px 40px}.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}select,input,button{font:inherit;border-radius:10px;border:1px solid var(--b);padding:12px;background:var(--s2);color:var(--t)}select{flex:1;min-width:150px}button{font-weight:700;cursor:pointer}.primary{background:var(--a);border-color:var(--a)}.search{width:100%;margin-bottom:12px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.stat,.item{background:var(--s);border:1px solid var(--b);border-radius:13px;padding:13px}.num{font-size:22px;font-weight:800;margin-top:6px}.item{display:flex;align-items:center;gap:10px;margin-bottom:9px}.item-main{flex:1;min-width:0}.name{font-weight:750}.meta{font-size:12px;color:var(--m);margin-top:5px}.qty{font-weight:800;white-space:nowrap}.low{color:#f5a623}.good{color:var(--g)}.empty{padding:24px;text-align:center;color:var(--m);background:var(--s);border-radius:12px}.note{font-size:12px;color:var(--m);line-height:1.5;margin-top:18px}@media(max-width:420px){.summary{grid-template-columns:1fr 1fr}.item{padding:11px}.qty{font-size:13px}}
+</style></head>
+<body><header class="head"><div class="brand">EUVI <span style="color:var(--a)">GESTÃO</span></div><div class="muted">Frente de loja · Controle de bebidas</div></header>
+<main class="wrap"><div class="bar"><select id="store"><option value="">Carregando unidades…</option></select><button id="reload">Atualizar</button></div>
+<input class="search" id="search" placeholder="Buscar bebida…">
+<div class="summary"><div class="stat"><div class="muted">Bebidas cadastradas</div><div class="num" id="total">—</div></div><div class="stat"><div class="muted">Estoque baixo</div><div class="num low" id="low">—</div></div><div class="stat"><div class="muted">Sem estoque</div><div class="num" id="zero">—</div></div></div>
+<div id="status" class="muted" style="margin:12px 0">Conectando…</div><section id="list"></section>
+<p class="note">Esta tela consulta o estoque de bebidas da unidade selecionada. Alterações na quantidade só serão habilitadas quando as permissões e o fluxo de reposição estiverem configurados para a conta.</p></main>
+<script>
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let rows=[];
+const $=id=>document.getElementById(id);
+function msg(t){$('status').textContent=t}
+async function init(){
+ const {data:{session},error}=await db.auth.getSession();
+ if(error) throw error;
+ if(!session){msg('Faça login pela tela de acesso do Euvi para consultar as bebidas.');$('list').innerHTML='<div class="empty">Sessão não encontrada. Entre pela tela de acesso existente.</div>';return}
+ const {data:members,error:me}=await db.from('store_members').select('store_id, stores(id,name,slug,active)').eq('user_id',session.user.id);
+ if(me) throw me;
+ const stores=(members||[]).map(x=>x.stores).filter(x=>x&&x.active);
+ if(!stores.length){msg('Nenhuma unidade vinculada a este usuário.');$('list').innerHTML='<div class="empty">Peça ao administrador para liberar o acesso à unidade.</div>';return}
+ $('store').innerHTML=stores.map(s=>'<option value="'+s.id+'">'+s.name+'</option>').join('');
+ await load();
+}
+async function load(){
+ const sid=$('store').value;if(!sid)return;
+ msg('Atualizando estoque…');
+ const {data:cats,error:ce}=await db.from('categories').select('id').eq('name','Bebidas').limit(1);
+ if(ce)throw ce;
+ if(!cats?.length){rows=[];render();msg('Categoria Bebidas não encontrada no cadastro.');return}
+ const {data:products,error:pe}=await db.from('products').select('id,name,unit,active,category_id').eq('category_id',cats[0].id).eq('active',true).order('name');
+ if(pe)throw pe;
+ const ids=(products||[]).map(p=>p.id);
+ let inv=[];
+ if(ids.length){const {data,error:ie}=await db.from('inventory').select('product_id,current_qty,min_qty,ideal_qty,updated_at').eq('store_id',sid).in('product_id',ids);if(ie)throw ie;inv=data||[]}
+ rows=(products||[]).map(p=>({...p,...(inv.find(i=>i.product_id===p.id)||{current_qty:0,min_qty:0,ideal_qty:0})}));
+ render();msg('Estoque atualizado.');
+}
+function render(){
+ const q=$('search').value.toLocaleLowerCase('pt-BR');
+ const shown=rows.filter(r=>r.name.toLocaleLowerCase('pt-BR').includes(q));
+ $('total').textContent=rows.length;$('low').textContent=rows.filter(r=>Number(r.current_qty)<=Number(r.min_qty)&&Number(r.current_qty)>0).length;$('zero').textContent=rows.filter(r=>Number(r.current_qty)<=0).length;
+ $('list').innerHTML=shown.length?shown.map(r=>{const n=Number(r.current_qty)||0,m=Number(r.min_qty)||0;const cls=n<=0?'low':n<=m?'low':'good';return '<article class="item"><div class="item-main"><div class="name">'+esc(r.name)+'</div><div class="meta">Mínimo: '+m+' '+esc(r.unit||'un')+'</div></div><div class="qty '+cls+'">'+n+' '+esc(r.unit||'un')+'</div></article>'}).join(''):'<div class="empty">Nenhuma bebida encontrada nesta unidade.</div>';
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('reload').addEventListener('click',()=>load().catch(e=>msg('Erro ao atualizar: '+e.message)));
+$('store').addEventListener('change',()=>load().catch(e=>msg('Erro ao carregar unidade: '+e.message)));
+$('search').addEventListener('input',render);
+init().catch(e=>{msg('Não foi possível carregar: '+e.message);$('list').innerHTML='<div class="empty">Verifique a conexão e as permissões do usuário.</div>'});
+</script></body></html>
