@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Euvi Gestão — Controle de Estoque</title>
+<style>
+  :root{--bg:#0d0d0d;--surface:#1a1a1a;--surface2:#202020;--card:#171717;--border:#2e2e2e;--accent:#e8432d;--accent2:#ff6b4a;--gold:#f5a623;--green:#22c55e;--text:#f2f2f2;--muted:#969696;--subtle:#555;--radius:16px;--font:Inter,Arial,sans-serif;--mono:JetBrains Mono,monospace}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100%;font-size:15px}
+  body{padding-bottom:86px}
+  button,input,select{font:inherit}
+  button{cursor:pointer}
+  .app{min-height:100vh}
+  .sidebar{display:none}
+  .main{margin:0;min-height:100vh;display:flex;flex-direction:column}
+  .topbar{position:fixed;top:0;left:0;right:0;height:72px;background:rgba(13,13,13,.97);border-bottom:1px solid var(--border);z-index:100;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .topbar-title{font-size:19px;font-weight:750;letter-spacing:-.5px;white-space:nowrap}
+  .topbar-title:before{content:'📦';margin-right:8px}
+  .topbar-actions{display:flex;align-items:center;gap:8px}
+  .loja-chip{height:44px;min-width:110px;padding:0 13px;border:1px solid var(--border);border-radius:14px;background:#171717;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:650}
+  .loja-chip select{width:100%;background:transparent;border:0;outline:0;color:var(--text);font-weight:650;appearance:none}
+  .loja-chip select option{background:#1a1a1a;color:#fff}
+  .content{padding:94px 14px 18px;flex:1;max-width:760px;width:100%;margin:0 auto}
+  .view{display:none}.view.active{display:block}
+  .page-title{font-size:29px;font-weight:750;letter-spacing:-.7px;margin:4px 2px 18px}
+  .page-sub{color:var(--muted);margin:-10px 2px 18px;font-size:14px}
+  .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px 12px;min-height:126px}
+  .stat-card-label{font-size:13px;font-weight:650;margin-bottom:10px;color:#ddd}
+  .stat-card-value{font-size:34px;font-weight:800;line-height:1;font-family:var(--mono)}
+  .stat-card-value.red{color:#ef4444}.stat-card-value.gold{color:#f59e0b}.stat-card-value.green{color:#4ade80}
+  .stat-card-sub{font-size:11px;color:var(--muted);margin-top:10px}
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:16px}
+  .section-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .section-title{font-size:17px;font-weight:700}.section-body{padding:12px}
+  .critical-list{padding:0 12px}.critical-item{display:flex;align-items:center;gap:12px;padding:15px 4px;border-bottom:1px solid var(--border)}.critical-item:last-child{border-bottom:0}
+  .product-icon{width:44px;height:44px;border-radius:12px;background:#242424;display:grid;place-items:center;font-size:21px;flex:0 0 44px}
+  .product-info{min-width:0;flex:1}.product-name{font-size:15px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.product-meta{font-size:12px;color:var(--muted);margin-top:4px}
+  .stock-value{text-align:right;font-family:var(--mono);font-weight:750;font-size:14px}.status{font-size:11px;font-weight:700;margin-top:4px;text-align:right}.status.red{color:#ef4444}.status.gold{color:#f59e0b}.status.green{color:#4ade80}
+  .btn{min-height:46px;padding:0 15px;border-radius:12px;font-size:14px;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text)}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn-green{background:var(--green);border-color:var(--green);color:#fff}.btn-ghost{background:var(--surface2);color:var(--text)}
+  .full-btn{width:100%;margin-top:10px}.small-btn{min-height:40px;padding:0 12px;font-size:13px}
+  .search-row{display:flex;gap:9px;margin-bottom:12px}.search-input{height:48px;flex:1;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:13px;color:var(--text);padding:0 14px;outline:0}.search-input:focus{border-color:var(--accent)}
+  .category-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}.category-row::-webkit-scrollbar{display:none}.tab{height:40px;white-space:nowrap;padding:0 14px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--muted);font-weight:650}.tab.active{background:rgba(232,67,45,.14);border-color:rgba(232,67,45,.5);color:var(--accent2)}
+  .stock-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:10px}.stock-top{display:flex;gap:10px;align-items:center}.stock-main{flex:1;min-width:0}.stock-name{font-size:16px;font-weight:700}.stock-cat{font-size:11px;color:var(--muted);margin-top:3px}.stock-number{font-family:var(--mono);font-weight:800;font-size:18px}.stock-number.red{color:#ef4444}.stock-number.gold{color:#f59e0b}.stock-number.green{color:#4ade80}.stock-bar{height:6px;background:#303030;border-radius:5px;overflow:hidden;margin:12px 0}.stock-bar-fill{height:100%;border-radius:5px}.stock-controls{display:flex;align-items:center;gap:8px}.qty-btn{width:46px;height:46px;border:1px solid var(--border);border-radius:12px;background:#232323;color:#fff;font-size:24px;font-weight:500}.qty-input{height:46px;flex:1;min-width:0;text-align:center;background:#151515;border:1px solid var(--border);border-radius:12px;color:#fff;font-family:var(--mono);font-weight:750;outline:0}.edit-btn{width:46px;height:46px;border:1px solid var(--border);border-radius:12px;background:#232323;color:#fff;font-size:18px}
+  .banner{padding:13px 14px;border-radius:14px;background:rgba(232,67,45,.1);border:1px solid rgba(232,67,45,.28);color:#ff8c78;margin-bottom:12px;font-size:13px;font-weight:600}
+  .placeholder{min-height:55vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}.placeholder-icon{font-size:48px;margin-bottom:14px}.placeholder h2{font-size:24px;margin-bottom:8px}.placeholder p{color:var(--muted);font-size:15px}
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:78px;background:rgba(18,18,18,.98);border-top:1px solid var(--border);z-index:110;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:6px 4px env(safe-area-inset-bottom)}
+  .bottom-btn{border:0;background:transparent;color:#858585;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:650;min-width:0;padding:0 1px}.bottom-btn .bn-icon{font-size:21px;line-height:1}.bottom-btn.active{color:var(--accent)}
+  .toast{position:fixed;left:14px;right:14px;bottom:94px;background:#202020;border:1px solid var(--border);border-radius:14px;padding:14px 16px;font-size:13px;font-weight:650;z-index:300;transform:translateY(130px);opacity:0;transition:.25s}.toast.show{transform:translateY(0);opacity:1}.toast.success{border-color:var(--green)}.toast.error{border-color:var(--accent)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center;z-index:250;padding:10px}.modal-overlay.open{display:flex}.modal{width:min(100%,620px);max-height:90vh;overflow:auto;background:#191919;border:1px solid var(--border);border-radius:20px 20px 10px 10px}.modal-header{padding:17px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}.modal-title{font-size:17px;font-weight:750}.modal-close{width:42px;height:42px;border:0;background:#242424;color:#fff;border-radius:12px;font-size:24px}.modal-body{padding:17px}.modal-footer{padding:14px 17px;border-top:1px solid var(--border);display:flex;gap:9px}.modal-footer .btn{flex:1}.form-row,.form-row-2{margin-bottom:14px}.input-label{display:block;color:#ccc;font-size:12px;font-weight:650;margin-bottom:7px}.input-field,.select-field{width:100%;height:48px;background:#151515;border:1px solid var(--border);border-radius:12px;color:#fff;padding:0 13px;outline:0}.input-field:focus,.select-field:focus{border-color:var(--accent)}
+  .legacy-hide{display:none!important}
+  .config-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px;margin:0 0 14px}
+  .config-section h2{font-size:16px;margin-bottom:7px}.config-section p{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:13px}
+  .config-store{background:#141414;border:1px solid var(--border);border-radius:13px;padding:12px;margin-top:10px}
+  .config-store-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700}
+  .config-store-grid{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px}
+  .config-store .input-field,.config-store .select-field{height:44px;min-width:0}
+  .topbar-settings{width:42px;height:42px;flex:0 0 42px;border:1px solid var(--border);border-radius:12px;background:#202020;color:#fff;font-size:19px}
+  .store-badge{font-size:10px;padding:4px 7px;border-radius:999px;background:#252525;color:#ccc}
+  .config-toolbar{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px}
+  @media(max-width:380px){.topbar-title{font-size:16px}.topbar-title:before{margin-right:4px}.loja-chip{min-width:95px;padding:0 8px}.bottom-btn{font-size:9px}.bottom-btn .bn-icon{font-size:19px}.config-toolbar,.config-store-grid{grid-template-columns:1fr}}
+  @media(min-width:701px){.content{padding-left:22px;padding-right:22px}.bottom-nav{max-width:760px;left:50%;transform:translateX(-50%);border-left:1px solid var(--border);border-right:1px solid var(--border)}}
+  /* === FASES 2 + 3 === */
+  .phase-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.phase-toolbar .page-title{margin:0}
+  .recipe-card,.production-card,.loss-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px;margin-bottom:12px}
+  .recipe-head,.loss-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.recipe-name,.loss-name{font-size:17px;font-weight:750}.recipe-meta,.loss-meta{font-size:12px;color:var(--muted);margin-top:5px}.recipe-actions{display:flex;gap:7px}.recipe-actions .btn{min-height:42px;padding:0 12px}.ingredient-chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.ingredient-chip{border:1px solid var(--border);background:#151515;border-radius:999px;padding:7px 9px;font-size:12px;color:#ddd}
+  .stock-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0 14px}.stock-action-btn{min-height:48px;border-radius:12px;border:1px solid var(--border);background:#1a1a1a;color:#fff;font-size:14px;font-weight:750}.stock-action-btn.primary{background:var(--accent);border-color:var(--accent)}.stock-action-btn.green{background:#22c55e;border-color:#22c55e;color:#08120a}.list-check{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #2a2a2a}.list-check input{width:20px;height:20px;accent-color:var(--accent)}.list-check-main{flex:1}.list-check-name{font-weight:700}.list-category-title{font-size:13px;font-weight:800;color:#fff;padding:14px 0 7px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #333;margin-top:4px}.list-category-title:first-child{margin-top:0}.list-category-count{font-size:11px;color:var(--muted);font-weight:600}.list-check-meta{font-size:12px;color:var(--muted);margin-top:3px}.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}  .search-picker{position:relative}.search-picker .picker-input{width:100%;height:48px;background:#151515;border:1px solid var(--border);border-radius:12px;color:#fff;padding:0 13px;outline:0}.search-picker .picker-input:focus{border-color:var(--accent)}.picker-menu{position:absolute;left:0;right:0;top:54px;max-height:260px;overflow:auto;background:#202020;border:1px solid var(--border);border-radius:12px;z-index:500;box-shadow:0 12px 30px rgba(0,0,0,.45);display:none}.picker-menu.open{display:block}.picker-option{min-height:48px;display:flex;align-items:center;padding:10px 13px;border-bottom:1px solid #2a2a2a;color:#fff;cursor:pointer}.picker-option:last-child{border-bottom:0}.picker-option:active,.picker-option:hover{background:#2a2a2a}.picker-empty{padding:14px;color:var(--muted);font-size:13px}.ingredient-row .search-picker .picker-input{height:44px;padding:0 9px}  .form-section-title{font-size:14px;font-weight:750;margin:18px 0 10px}.ingredient-row{display:grid;grid-template-columns:1.5fr .7fr .7fr 44px;gap:7px;margin-bottom:8px;align-items:center}.ingredient-row .input-field,.ingredient-row .select-field{height:44px;padding:0 9px}.icon-remove{width:44px;height:44px;border:1px solid #542525;background:#261515;color:#ff6b5a;border-radius:10px;font-size:20px}
+  .preview-card{background:#141414;border:1px dashed #555;border-radius:16px;padding:15px;margin:14px 0}.preview-title{color:#ff6b3d;font-weight:750;margin-bottom:8px}.preview-line{padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:13px}.preview-line:last-child{border-bottom:0}.yield-number{color:var(--green);font-size:21px;font-weight:800}.notice{background:#241d18;border:1px solid #5a3825;color:#f5c6a6;padding:11px 13px;border-radius:12px;font-size:12px;margin-bottom:12px}.danger-btn{background:#2a1717!important;border-color:#633030!important;color:#ff8275!important}.loss-today{margin-top:18px}.loss-empty{padding:25px 8px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:14px}.reason-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.reason-btn{min-height:62px;border:1px solid var(--border);background:#171717;color:#ccc;border-radius:12px;font-size:11px}.reason-btn.active{border-color:var(--accent);background:#2a1917;color:#fff}.reason-btn span{display:block;font-size:20px;margin-bottom:3px}.today-time{font-family:var(--mono);color:var(--muted);font-size:12px}
+  @media(max-width:520px){.ingredient-row{grid-template-columns:1.25fr .7fr .65fr 44px}.reason-row{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="app-name-title">Euvi Gestão</div>
+      <div class="topbar-actions">
+        <label class="loja-chip"><span>🏪</span><select id="unidade-select" aria-label="Unidade ativa" onchange="trocarUnidade(this.value)"><option value="principal" selected>Loja Principal</option></select><span>⌄</span></label><button class="topbar-settings" type="button" aria-label="Configurações" title="Configurações" onclick="navigate('config')">⚙</button>
+      </div>
+    </header>
+    <div class="content">
+      <section class="view active" id="view-dashboard">
+        <h1 class="page-title">Resumo do estoque</h1>
+        <div class="cards-grid">
+          <div class="stat-card"><div class="stat-card-label">🔴 Críticos</div><div class="stat-card-value red" id="dash-criticos">0</div><div class="stat-card-sub">Ação imediata</div></div>
+          <div class="stat-card"><div class="stat-card-label">🟠 Atenção</div><div class="stat-card-value gold" id="dash-atencao">0</div><div class="stat-card-sub">Revisar estoque</div></div>
+          <div class="stat-card"><div class="stat-card-label">🟢 OK</div><div class="stat-card-value green" id="dash-ok">0</div><div class="stat-card-sub">Dentro do ideal</div></div>
+        </div>
+        <div id="alertas-container"></div>
+        <div class="section">
+          <div class="section-header"><div class="section-title">📋 Estoque crítico</div><button class="btn small-btn" onclick="navigate('estoque')">Ver tudo</button></div>
+          <div class="critical-list" id="critical-list"></div>
+          <div class="section-body"><button class="btn btn-primary full-btn" onclick="navigate('estoque')">Ver estoque completo</button></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-estoque">
+        <h1 class="page-title">Estoque</h1><p class="page-sub">Produtos da unidade selecionada</p>
+        <div class="search-row"><input id="mobile-search" class="search-input" placeholder="Buscar produto..." oninput="searchEstoque(this.value)"></div>
+        <div class="category-row" id="mobile-categories">
+          <button class="tab active" onclick="filterEstoque('todos',this)">Todas</button><button class="tab" onclick="filterEstoque('critico',this)">Críticos</button><button class="tab" onclick="filterEstoque('carnes',this)">Carnes</button><button class="tab" onclick="filterEstoque('frios',this)">Frios</button><button class="tab" onclick="filterEstoque('verduras',this)">Verduras</button><button class="tab" onclick="filterEstoque('mercado',this)">Mercado</button><button class="tab" onclick="filterEstoque('embalagem',this)">Embalagem</button>
+        </div>
+        <div class="stock-actions" style="grid-template-columns:1fr 1fr 1fr">
+          <button class="stock-action-btn primary" onclick="abrirEntradaMobile()">＋ Entrada</button>
+          <button class="stock-action-btn green" onclick="abrirListaMobile()">☑ Gerar lista</button>
+          <button class="stock-action-btn" onclick="abrirCadastrarProduto()">＋ Produto</button>
+        </div>
+        <div id="mobile-stock-list"></div>
+      </section>
+
+      <section class="view" id="view-bebidas">
+        <h1 class="page-title" id="bebidas-page-title">Bebidas</h1><p class="page-sub">Estoque de bebidas da unidade selecionada</p>
+        <div class="search-row"><input id="bebidas-search" class="search-input" placeholder="Buscar bebida..." oninput="renderBebidas()"></div>
+        <div class="stock-actions" style="grid-template-columns:1fr 1fr"><button class="stock-action-btn primary" onclick="abrirEntradaMobile()">＋ Entrada</button><button class="stock-action-btn" onclick="abrirCadastrarProdutoBebida()">＋ Bebida</button></div>
+        <div id="mobile-drink-list"></div>
+      </section>
+
+      <section class="view" id="view-receitas">
+        <div class="phase-toolbar"><h1 class="page-title">Receitas</h1><button class="btn btn-primary" onclick="abrirNovaReceita()">+ Nova receita</button></div>
+        <p class="page-sub">Fichas técnicas para produção</p>
+        <div id="receitas-list"></div>
+      </section>
+
+      <section class="view" id="view-producao">
+        <h1 class="page-title">Produção</h1><p class="page-sub">Converta matéria-prima em produto final</p>
+        <div id="producao-aviso"></div>
+        <div class="production-card">
+          <div class="form-row"><label class="input-label">Receita</label><div class="search-picker" id="producao-receita-picker"><input class="picker-input" id="producao-receita-search" autocomplete="off" placeholder="Pesquisar receita..."><input type="hidden" id="producao-receita"><div class="picker-menu" id="producao-receita-menu"></div></div></div>
+          <div class="form-row"><label class="input-label">Kg de carne a usar</label><input class="input-field" id="producao-kg" type="number" min="0" step="0.1" value="10" oninput="renderPreviewProducao()"></div>
+          <div id="producao-preview"></div>
+          <div class="form-row"><label class="input-label">Unidades reais produzidas</label><div style="display:grid;grid-template-columns:52px 1fr 52px;gap:0"><button class="qty-btn" style="height:52px" onclick="alterarUnidadesProducao(-1)">−</button><input class="input-field" style="border-radius:0;text-align:center;font-size:20px;font-weight:800" id="producao-reais" type="number" min="0" step="1" value="0" oninput="renderRendimentoProducao()"><button class="qty-btn" style="height:52px" onclick="alterarUnidadesProducao(1)">+</button></div></div>
+          <div id="producao-rendimento" style="text-align:center;color:#aaa;margin:8px 0 14px">Rendimento: —</div>
+          <button class="btn btn-primary full-btn" onclick="confirmarProducaoAtual()">✓ Confirmar produção</button>
+        </div>
+      </section>
+
+      <section class="view" id="view-perdas">
+        <h1 class="page-title">Perdas</h1><p class="page-sub">Registre desperdícios da unidade selecionada</p>
+        <div class="production-card">
+          <div class="form-row"><label class="input-label">Produto</label><div class="search-picker" id="perda-produto-picker"><input class="picker-input" id="perda-produto-search" autocomplete="off" placeholder="Pesquisar produto..."><input type="hidden" id="perda-produto"><div class="picker-menu" id="perda-produto-menu"></div></div></div>
+          <div class="form-row-2" style="display:grid;grid-template-columns:1fr 120px;gap:8px"><div><label class="input-label">Quantidade</label><input class="input-field" id="perda-qtd" type="number" min="0" step="0.1"></div><div><label class="input-label">Unidade</label><select class="select-field" id="perda-unidade"><option>kg</option><option>un</option><option>cx</option><option>pct</option><option>L</option><option>fardo</option></select></div></div>
+          <div class="form-section-title">Motivo</div><div class="reason-row" id="perda-motivos"><button class="reason-btn active" data-motivo="limpeza" onclick="selecionarMotivoPerda('limpeza')"><span>🧹</span>Limpeza</button><button class="reason-btn" data-motivo="validade" onclick="selecionarMotivoPerda('validade')"><span>📅</span>Validade</button><button class="reason-btn" data-motivo="quebra" onclick="selecionarMotivoPerda('quebra')"><span>☕</span>Quebra</button><button class="reason-btn" data-motivo="producao" onclick="selecionarMotivoPerda('producao')"><span>⚙️</span>Produção</button><button class="reason-btn" data-motivo="outro" onclick="selecionarMotivoPerda('outro')"><span>•••</span>Outro</button></div>
+          <div class="form-row" style="margin-top:14px"><label class="input-label">Observação <span style="color:var(--muted)">(máx. 100)</span></label><textarea class="input-field" id="perda-obs" maxlength="100" style="height:84px;padding-top:12px;resize:none"></textarea></div>
+          <button class="btn" style="background:#22c55e;color:#08120a;border-color:#22c55e;width:100%;min-height:50px" onclick="registrarPerdaAtual()">▣ Registrar perda</button>
+        </div>
+        <div class="loss-today"><div class="section-header"><div class="section-title">Perdas de hoje</div><span class="today-time" id="perdas-data-hoje"></span></div><div id="perdas-hoje-list"></div></div>
+      </section>
+
+      <section class="view" id="view-config">
+        <h1 class="page-title">Configurações</h1><p class="page-sub">Nome do sistema e unidades com estoque independente</p>
+        <div class="config-section">
+          <h2>🏷️ Nome do sistema</h2><p>Nome exibido no cabeçalho deste app.</p>
+          <div class="form-row"><label class="input-label" for="config-app-name">Nome</label><input class="input-field" id="config-app-name" maxlength="60" value="Euvi Gestão" placeholder="Ex.: Adega Central"></div>
+          <button class="btn btn-primary full-btn" onclick="salvarNomeAplicativo()">Salvar nome</button>
+        </div>
+        <div class="config-section">
+          <h2>🏪 Adicionar unidade</h2><p>Cada loja terá contagem, mínimos e movimentos de estoque próprios. Para a adega, selecione o tipo “Adega / Bebidas”.</p>
+          <div class="form-row"><label class="input-label" for="config-store-name">Nome da nova unidade</label><input class="input-field" id="config-store-name" maxlength="60" placeholder="Ex.: Adega Centro"></div>
+          <div class="form-row"><label class="input-label" for="config-store-type">Perfil</label><select class="select-field" id="config-store-type"><option value="geral">Loja geral</option><option value="adega">Adega / Bebidas</option></select></div>
+          <button class="btn btn-primary full-btn" onclick="adicionarUnidade()">＋ Adicionar unidade</button>
+        </div>
+        <div class="config-section"><h2>⚙️ Unidades cadastradas</h2><p>Edite o nome ou o perfil de cada unidade. O identificador interno não muda, preservando o estoque existente.</p><div id="config-store-list"></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<nav class="bottom-nav">
+  <button class="bottom-btn active" data-view="dashboard" onclick="navigate('dashboard')"><span class="bn-icon">⌂</span><span>Home</span></button>
+  <button class="bottom-btn" data-view="estoque" onclick="navigate('estoque')"><span class="bn-icon">▣</span><span>Estoque</span></button>
+  <button class="bottom-btn" data-view="bebidas" onclick="navigate('bebidas')"><span class="bn-icon">🥤</span><span>Bebidas</span></button>
+  <button class="bottom-btn" data-view="producao" onclick="navigate('producao')"><span class="bn-icon">🥩</span><span>Produção</span></button>
+  <button class="bottom-btn" data-view="receitas" onclick="navigate('receitas')"><span class="bn-icon">▤</span><span>Receitas</span></button>
+  <button class="bottom-btn" data-view="perdas" onclick="navigate('perdas')"><span class="bn-icon">▥</span><span>Perdas</span></button>
+</nav>
+
+<div class="modal-overlay" id="modal-editar-produto"><div class="modal"><div class="modal-header"><div class="modal-title">Editar produto</div><button class="modal-close" onclick="closeModal('modal-editar-produto')">×</button></div><div class="modal-body">
+<input type="hidden" id="ep-id"><div class="form-row"><label class="input-label">Nome</label><input class="input-field" id="ep-nome"></div>
+<div class="form-row-2"><div><label class="input-label">Categoria</label><select class="select-field" id="ep-categoria"><option value="carnes">Carnes</option><option value="frios">Frios</option><option value="verduras">Verduras</option><option value="mercado">Mercado</option><option value="embalagem">Embalagem</option><option value="bebidas">Bebidas</option><option value="outros">Outros</option></select></div><div><label class="input-label">Medida</label><select class="select-field" id="ep-medida"><option value="kg">kg</option><option value="un">un</option><option value="cx">cx</option><option value="fardo">fardo</option><option value="pct">pct</option><option value="L">L</option></select></div></div>
+<div class="form-row-2"><div><label class="input-label">Atual</label><input type="number" class="input-field" id="ep-atual" min="0" step="0.5"></div><div><label class="input-label">Mínimo</label><input type="number" class="input-field" id="ep-minimo" min="0" step="0.5"></div></div>
+<div class="form-row"><label class="input-label">Ícone / emoji</label><input class="input-field" id="ep-icone" maxlength="4" placeholder="Ex.: 🥩"></div>
+<input type="hidden" id="ep-unidade" value="manoel">
+</div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-editar-produto')">Cancelar</button><button class="btn btn-primary" onclick="salvarEdicaoProduto()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-receita"><div class="modal"><div class="modal-header"><div class="modal-title">Ficha técnica</div><button class="modal-close" onclick="closeModal('modal-receita')">×</button></div><div class="modal-body">
+<input type="hidden" id="rec-id"><div class="form-row"><label class="input-label">Nome</label><input class="input-field" id="rec-nome" placeholder="Ex.: Picadinho 120g"></div>
+<div class="form-row"><label class="input-label">Produto final</label><div class="search-picker" id="rec-pf-picker"><input class="picker-input" id="rec-pf-search" autocomplete="off" placeholder="Pesquisar produto final..."><input type="hidden" id="rec-pf"><div class="picker-menu" id="rec-pf-menu"></div></div></div>
+<div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="input-label">Base (kg)</label><input class="input-field" id="rec-base" type="number" min="0.01" step="0.1"></div><div><label class="input-label">Gramas por unidade</label><input class="input-field" id="rec-gramas" type="number" min="0" step="1"></div></div>
+<div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="input-label">Rendimento esperado (un)</label><input class="input-field" id="rec-rendimento" type="number" min="0" step="1"></div><div><label class="input-label">Perda limpeza %</label><input class="input-field" id="rec-perda" type="number" min="0" step="0.1" value="0"></div></div>
+<div class="form-section-title">Ingredientes</div><div id="ingredientes-editor"></div><button class="btn" style="width:100%;margin-top:4px" onclick="adicionarIngredienteLinha()">+ Ingrediente</button>
+</div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-receita')">Cancelar</button><button class="btn btn-primary" onclick="salvarReceitaForm()">Salvar</button></div></div></div>
+<div class="modal-overlay" id="modal-entrada-mobile"><div class="modal"><div class="modal-header"><div><div class="modal-title">Entrada de estoque</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Unidade: <strong id="entrada-mobile-unidade">Loja Principal</strong></div></div><button class="modal-close" onclick="closeModal('modal-entrada-mobile')">×</button></div><div class="modal-body">
+<div class="form-row"><label class="input-label">Itens recebidos</label><div id="entrada-itens-mobile"></div><button type="button" class="btn" style="width:100%;margin-top:10px;min-height:48px" onclick="adicionarItemEntradaMobile()">＋ Adicionar mais um item</button></div>
+<div class="form-row"><label class="input-label">Fornecedor <span style="color:var(--muted)">(opcional)</span></label><input class="input-field" id="entrada-fornecedor-mobile" placeholder="Ex.: Atacadão"></div>
+<div class="form-row"><label class="input-label">Observação <span style="color:var(--muted)">(opcional)</span></label><textarea class="input-field" id="entrada-obs-mobile" maxlength="100" style="height:76px;padding-top:12px;resize:none"></textarea></div>
+</div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-entrada-mobile')">Cancelar</button><button class="btn btn-green" onclick="confirmarEntradaMobile()">Adicionar entrada</button></div></div></div>
+<div class="modal-overlay" id="modal-lista-mobile"><div class="modal"><div class="modal-header"><div><div class="modal-title">Gerar lista de compras</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Itens abaixo do mínimo · <span id="lista-mobile-unidade">Loja Principal</span></div></div><button class="modal-close" onclick="closeModal('modal-lista-mobile')">×</button></div><div class="modal-body"><div id="lista-mobile-itens"></div><div id="lista-mobile-vazia" class="empty" style="display:none;padding:20px 5px;text-align:center;color:var(--green)">✓ Nenhum item abaixo do mínimo.</div></div><div class="modal-footer sheet-actions"><button class="btn" onclick="closeModal('modal-lista-mobile')">Fechar</button><button class="btn btn-green" onclick="enviarListaWhatsAppMobile()">WhatsApp</button></div></div></div>
+<div class="modal-overlay" id="modal-cadastrar-produto"><div class="modal"><div class="modal-header"><div class="modal-title">Cadastrar produto</div><button class="modal-close" onclick="closeModal('modal-cadastrar-produto')">×</button></div><div class="modal-body">
+<div class="form-row"><label class="input-label">Nome</label><input class="input-field" id="np-nome" placeholder="Ex.: Salsicha"></div>
+<div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="input-label">Categoria</label><select class="select-field" id="np-categoria"><option value="carnes">Carnes</option><option value="frios">Frios</option><option value="verduras">Verduras</option><option value="mercado">Mercado</option><option value="embalagem">Embalagem</option><option value="bebidas">Bebidas</option><option value="outros" selected>Outros</option></select></div><div><label class="input-label">Medida</label><select class="select-field" id="np-medida"><option value="kg">kg</option><option value="un" selected>un</option><option value="cx">cx</option><option value="pct">pct</option><option value="fardo">fardo</option><option value="L">L</option></select></div></div>
+<div class="form-row"><label class="input-label">Ícone / emoji</label><input class="input-field" id="np-icone" maxlength="4" placeholder="Ex.: 🥩, 🧀, 🥬"></div>
+<div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="input-label">Estoque inicial</label><input class="input-field" id="np-atual" type="number" min="0" step="0.1" value="0"></div><div><label class="input-label">Mínimo</label><input class="input-field" id="np-minimo" type="number" min="0" step="0.1" value="0"></div></div>
+<div class="form-section-title">Tipo</div><div class="type-row"><button type="button" class="type-choice active" data-tipo="ambos" onclick="selecionarTipoNovo('ambos',this)">Ambos</button><button type="button" class="type-choice" data-tipo="mp" onclick="selecionarTipoNovo('mp',this)">Matéria-prima</button><button type="button" class="type-choice" data-tipo="pf" onclick="selecionarTipoNovo('pf',this)">Produto final</button></div><input type="hidden" id="np-tipo" value="ambos">
+</div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-cadastrar-produto')">Cancelar</button><button class="btn btn-primary" onclick="salvarNovoProduto()">Cadastrar produto</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+// ==================== SUPABASE PERSISTENCE ====================
+(function(){
+  const TABLE = 'estoque';
+  const ROW_ID = 1;
+  let client = null;
+  const DEFAULT_STORES = [
+    {id:'principal', nome:'Loja Principal', tipo:'geral', ativo:true},
+    {id:'manoel', nome:'Manoel', tipo:'geral', ativo:true},
+    {id:'brilhante', nome:'Brilhante', tipo:'geral', ativo:true}
+  ];
+  let configuredStores = DEFAULT_STORES.map(x=>({...x}));
+
+  function getClient(){
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') throw new Error('Biblioteca Supabase não carregada.');
+    if (typeof SUPABASE_URL === 'undefined' || typeof SUPABASE_ANON_KEY === 'undefined') throw new Error('Configuração do Supabase ausente.');
+    if (!client) client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return client;
+  }
+  function lojaDefault(ativo){ return {ativo:!!ativo, atual:0, minimo:0}; }
+  function normalizarLojas(stores){
+    const map = new Map(DEFAULT_STORES.map(x=>[x.id,{...x}]));
+    if (Array.isArray(stores)) stores.forEach(raw=>{
+      if(!raw || typeof raw!=='object') return;
+      const id=String(raw.id||'').trim();
+      if(!/^[a-z0-9_-]{1,48}$/.test(id)) return;
+      const previous=map.get(id)||{id,nome:id,tipo:'geral',ativo:true};
+      map.set(id,{...previous,nome:String(raw.nome||previous.nome||id).trim().slice(0,60)||id,tipo:raw.tipo==='adega'?'adega':'geral',ativo:raw.ativo!==false});
+    });
+    if(![...map.values()].some(x=>x.ativo)) map.get('principal').ativo=true;
+    return [...map.values()];
+  }
+  function normalizarProduto(raw){
+    const p=raw||{};
+    const keys=new Set([...configuredStores.map(x=>x.id),'principal','manoel','brilhante',...Object.keys(p.lojas&&typeof p.lojas==='object'?p.lojas:{})]);
+    const lojas={};
+    if(p.lojas&&typeof p.lojas==='object'){
+      keys.forEach(id=>{
+        const src=p.lojas[id]||{};
+        lojas[id]={ativo:src.ativo===false?false:(src.ativo===true||src.atual!=null||src.minimo!=null),atual:Math.max(0,Number(src.atual)||0),minimo:Math.max(0,Number(src.minimo)||0)};
+      });
+      // Compatibilidade com payload antigo que só tinha unidades Manoel/Brilhante.
+      if(!p.lojas.principal&&(p.lojas.manoel||p.lojas.brilhante)){
+        const base=p.lojas.manoel||p.lojas.brilhante||{};
+        lojas.principal={ativo:true,atual:Math.max(0,Number(base.atual)||0),minimo:Math.max(0,Number(base.minimo)||0)};
+      }
+    }else{
+      const unidade=p.unidade||'ambos';
+      const destinos=(unidade==='ambos'||unidade==='principal')?configuredStores.filter(x=>x.ativo).map(x=>x.id):(keys.has(unidade)?[unidade]:configuredStores.filter(x=>x.ativo).map(x=>x.id));
+      keys.forEach(id=>{lojas[id]=lojaDefault(false)});
+      destinos.forEach(id=>{lojas[id]={ativo:true,atual:Math.max(0,Number(p.atual)||0),minimo:Math.max(0,Number(p.minimo)||0)}});
+    }
+    keys.forEach(id=>{if(!lojas[id])lojas[id]=lojaDefault(false)});
+    if(!lojas.principal)lojas.principal=lojaDefault(false);
+    if(!lojas.principal.ativo&&(lojas.manoel?.ativo||lojas.brilhante?.ativo)){
+      lojas.principal.ativo=true;
+      if(!lojas.principal.atual&&lojas.manoel?.atual)lojas.principal.atual=lojas.manoel.atual;
+      if(!lojas.principal.minimo&&lojas.manoel?.minimo)lojas.principal.minimo=lojas.manoel.minimo;
+    }
+    return {id:p.id??Date.now(),nome:String(p.nome||''),categoria:p.categoria||'outros',medida:p.medida||p.unidadeMedida||'un',tipo:p.tipo||'ambos',icone:p.icone||'',lojas};
+  }
+  function normalizarPayload(payload,fallback){
+    const base=(payload&&typeof payload==='object')?{...payload}:{};
+    const oldConfig=base.config&&typeof base.config==='object'?base.config:{};
+    base.config={...oldConfig,appName:String(oldConfig.appName||'Euvi Gestão').trim().slice(0,60)||'Euvi Gestão',stores:normalizarLojas(oldConfig.stores)};
+    configuredStores=base.config.stores;
+    const products=Array.isArray(base.produtos)&&base.produtos.length?base.produtos:(fallback&&Array.isArray(fallback.produtos)?fallback.produtos:[]);
+    base.produtos=products.map(normalizarProduto);
+    base.listas=base.listas&&typeof base.listas==='object'?base.listas:{manoel:[],brilhante:[]};
+    base.producao=Array.isArray(base.producao)?base.producao:[];
+    base.receitas=Array.isArray(base.receitas)?base.receitas:[];
+    base.perdas=Array.isArray(base.perdas)?base.perdas:[];
+    base.contagens=Array.isArray(base.contagens)?base.contagens:[];
+    base.historico=Array.isArray(base.historico)?base.historico:[];
+    base.filtroEstoque=base.filtroEstoque||'todos';
+    base.searchEstoque=base.searchEstoque||'';
+    base.lojaFiltro=base.lojaFiltro||'principal';
+    return base;
+  }
+  function attachCompat(p,context){
+    if(!p||p.__euviCompat)return p;
+    const store=()=>{
+      if(context==='funcionario')return window.EUVI_ACTIVE_STORE||'manoel';
+      const s=window.EUVI_STATE, f=s&&s.lojaFiltro;
+      if(f&&configuredStores.some(x=>x.id===f))return f;
+      if(typeof window.unidadeAtiva==='string'&&configuredStores.some(x=>x.id===window.unidadeAtiva))return window.unidadeAtiva;
+      return configuredStores.find(x=>x.ativo)?.id||'principal';
+    };
+    Object.defineProperties(p,{
+      atual:{configurable:true,enumerable:false,get(){return p.lojas[store()]?.atual??0},set(v){if(!p.lojas[store()])p.lojas[store()]=lojaDefault(true);p.lojas[store()].atual=Math.max(0,Number(v)||0);p.lojas[store()].ativo=true}},
+      minimo:{configurable:true,enumerable:false,get(){return p.lojas[store()]?.minimo??0},set(v){if(!p.lojas[store()])p.lojas[store()]=lojaDefault(true);p.lojas[store()].minimo=Math.max(0,Number(v)||0);p.lojas[store()].ativo=true}},
+      unidade:{configurable:true,enumerable:false,get(){return store()},set(v){const destinations=v==='ambos'?configuredStores.filter(x=>x.ativo).map(x=>x.id):[v];Object.keys(p.lojas).forEach(id=>{p.lojas[id].ativo=destinations.includes(id)});destinations.forEach(id=>{if(!p.lojas[id])p.lojas[id]=lojaDefault(true);p.lojas[id].ativo=true})}},
+      __euviCompat:{value:true,enumerable:false,configurable:false}
+    });
+    return p;
+  }
+  function attachAll(payload,context){payload.produtos=(payload.produtos||[]).map(p=>attachCompat(normalizarProduto(p),context));return payload;}
+  async function carregar(fallback,context){
+    const db=getClient();
+    const {data,error}=await db.from(TABLE).select('payload').eq('id',ROW_ID).maybeSingle();
+    if(error)throw error;
+    return attachAll(normalizarPayload(data?.payload||null,fallback),context);
+  }
+  async function salvar(payload,context){
+    const db=getClient();
+    const local=normalizarPayload(payload,null);
+    const {data:remoteRow,error:readError}=await db.from(TABLE).select('payload').eq('id',ROW_ID).maybeSingle();
+    if(readError)throw readError;
+    const remoto=normalizarPayload(remoteRow?.payload||null,local);
+    const merged=context==='funcionario'?{...remoto,produtos:local.produtos}:{...remoto,...local,produtos:local.produtos};
+    merged.produtos=merged.produtos.map(normalizarProduto);
+    const {error}=await db.from(TABLE).upsert({id:ROW_ID,payload:merged},{onConflict:'id'});
+    if(error)throw error;
+    return attachAll(normalizarPayload(merged,null),context);
+  }
+  window.EuviPersistence={carregar,salvar,normalizarProduto,normalizarPayload,attachAll,lojaDefault};
+})();
+</script><script>
+// ==================== STATE ====================
+let state = {
+  produtos: [],
+  listas: { manoel: [], brilhante: [] },
+  producao: [],
+  contagens: [],
+  historico: [],
+  filtroEstoque: 'todos',
+  searchEstoque: '',
+  lojaFiltro: 'ambos'
+};
+window.EUVI_STATE = state;
+
+// ==================== PRODUTOS INICIAIS ====================
+const produtosIniciais = [
+  { id: 1, nome: 'Hambúrguer Tradicional', categoria: 'carnes', medida: 'kg', atual: 15, minimo: 20, unidade: 'ambos' },
+  { id: 2, nome: 'Picadinho', categoria: 'carnes', medida: 'un', atual: 8, minimo: 20, unidade: 'ambos' },
+  { id: 3, nome: 'Filé de Frango', categoria: 'carnes', medida: 'un', atual: 5, minimo: 10, unidade: 'ambos' },
+  { id: 4, nome: 'Ponta de Costela', categoria: 'carnes', medida: 'un', atual: 0, minimo: 20, unidade: 'ambos' },
+  { id: 5, nome: 'Mignon', categoria: 'carnes', medida: 'un', atual: 2, minimo: 5, unidade: 'ambos' },
+  { id: 6, nome: 'Mussarela', categoria: 'frios', medida: 'kg', atual: 8, minimo: 10, unidade: 'ambos' },
+  { id: 7, nome: 'Presunto', categoria: 'frios', medida: 'kg', atual: 6, minimo: 8, unidade: 'ambos' },
+  { id: 8, nome: 'Bacon', categoria: 'frios', medida: 'kg', atual: 12, minimo: 10, unidade: 'ambos' },
+  { id: 9, nome: 'Calabresa', categoria: 'frios', medida: 'kg', atual: 3, minimo: 5, unidade: 'ambos' },
+  { id: 10, nome: 'Catupiry', categoria: 'frios', medida: 'un', atual: 2, minimo: 3, unidade: 'ambos' },
+  { id: 11, nome: 'Alface', categoria: 'verduras', medida: 'cx', atual: 0, minimo: 1, unidade: 'ambos' },
+  { id: 12, nome: 'Tomate', categoria: 'verduras', medida: 'cx', atual: 1, minimo: 1, unidade: 'ambos' },
+  { id: 13, nome: 'Rúcula', categoria: 'verduras', medida: 'un', atual: 1, minimo: 3, unidade: 'ambos' },
+  { id: 14, nome: 'Cebolinha', categoria: 'verduras', medida: 'un', atual: 2, minimo: 3, unidade: 'ambos' },
+  { id: 15, nome: 'Cebola Branca', categoria: 'verduras', medida: 'kg', atual: 3, minimo: 4, unidade: 'ambos' },
+  { id: 16, nome: 'Cebola Roxa', categoria: 'verduras', medida: 'kg', atual: 1, minimo: 2, unidade: 'ambos' },
+  { id: 17, nome: 'Batata Crinkle', categoria: 'mercado', medida: 'cx', atual: 4, minimo: 5, unidade: 'ambos' },
+  { id: 18, nome: 'Batata Palha', categoria: 'mercado', medida: 'un', atual: 6, minimo: 6, unidade: 'ambos' },
+  { id: 19, nome: 'Óleo', categoria: 'mercado', medida: 'cx', atual: 2, minimo: 2, unidade: 'ambos' },
+  { id: 20, nome: 'Macarrão', categoria: 'mercado', medida: 'un', atual: 3, minimo: 5, unidade: 'ambos' },
+  { id: 21, nome: 'Caldo para Soba', categoria: 'mercado', medida: 'un', atual: 1, minimo: 3, unidade: 'ambos' },
+  { id: 22, nome: 'Tilápia', categoria: 'carnes', medida: 'cx', atual: 0, minimo: 1, unidade: 'brilhante' },
+  { id: 23, nome: 'Papel Acoplado', categoria: 'embalagem', medida: 'pct', atual: 1, minimo: 2, unidade: 'manoel' },
+  { id: 24, nome: 'Saco Delivery', categoria: 'embalagem', medida: 'pct', atual: 2, minimo: 3, unidade: 'ambos' },
+  { id: 25, nome: 'Guardanapo Mesa', categoria: 'embalagem', medida: 'cx', atual: 1, minimo: 2, unidade: 'ambos' },
+  { id: 26, nome: 'Gás', categoria: 'outros', medida: 'un', atual: 1, minimo: 2, unidade: 'ambos' },
+  { id: 27, nome: 'Álcool', categoria: 'mercado', medida: 'un', atual: 2, minimo: 3, unidade: 'ambos' },
+,
+  {id:1790288855963,nome:'Cheddar cremoso',categoria:'frios',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:true,atual:0,minimo:3}}},
+  {id:1790288930721,nome:'Cheddar queijo',categoria:'frios',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:4},manoel:{ativo:true,atual:3,minimo:4},brilhante:{ativo:true,atual:0,minimo:3}}},
+  {id:1790289375839,nome:'Polpa maracujá',categoria:'bebidas',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:3},manoel:{ativo:true,atual:2,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790289410395,nome:'Polpa Morango',categoria:'bebidas',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790289443022,nome:'Polpa Goiaba',categoria:'bebidas',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790289486324,nome:'Polpa acerola',categoria:'bebidas',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790289764538,nome:'Polpa Abacaxi',categoria:'bebidas',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:32,minimo:30},manoel:{ativo:true,atual:32,minimo:30},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790290124593,nome:'Cebola Onion',categoria:'mercado',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790291314537,nome:'Carne Louca',categoria:'carnes',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:15,minimo:25},manoel:{ativo:true,atual:15,minimo:25},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790293676503,nome:'Carne soba P',categoria:'carnes',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:27,minimo:20},manoel:{ativo:true,atual:27,minimo:20},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790293858404,nome:'Carne soba M',categoria:'carnes',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:27,minimo:20},manoel:{ativo:true,atual:27,minimo:20},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790293880142,nome:'Carne soba G',categoria:'carnes',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:13,minimo:20},manoel:{ativo:true,atual:13,minimo:20},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790294617260,nome:'Molho de Tomate',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:3},manoel:{ativo:true,atual:2,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790294655885,nome:'Milho',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:4,minimo:10},manoel:{ativo:true,atual:4,minimo:10},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790294685979,nome:'Tempero Completo',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:2},manoel:{ativo:true,atual:3,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790294762240,nome:'Sal grosso',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790294784880,nome:'Sal',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:2},manoel:{ativo:true,atual:3,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790294945587,nome:'Leite',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:15,minimo:25},manoel:{ativo:true,atual:15,minimo:25},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295036393,nome:'Óleo',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:23,minimo:40},manoel:{ativo:true,atual:23,minimo:40},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295061622,nome:'Shoyu Galão',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:2},manoel:{ativo:true,atual:3,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295126010,nome:'Açúcar',categoria:'mercado',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:7,minimo:5},manoel:{ativo:true,atual:7,minimo:5},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295180536,nome:'Manjericão',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:3},manoel:{ativo:true,atual:2,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295218575,nome:'Orégano',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295405335,nome:'Catchup sachê',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:14,minimo:16},manoel:{ativo:true,atual:14,minimo:16},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295483149,nome:'Mostarda sachê',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:2},manoel:{ativo:true,atual:1,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295513640,nome:'Maionese sachê',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:2},manoel:{ativo:true,atual:3,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295550697,nome:'Sal sachê',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295575982,nome:'Pimenta sachê',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295618747,nome:'Shoyu sachê',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:0,minimo:4},manoel:{ativo:true,atual:0,minimo:4},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295669268,nome:'Saquinho Hot',categoria:'embalagem',medida:'fardo',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:1},manoel:{ativo:true,atual:1,minimo:1},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295727353,nome:'Saquinho Lanche',categoria:'embalagem',medida:'fardo',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:1},manoel:{ativo:true,atual:1,minimo:1},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295760418,nome:'Separador hambúrguer',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:10},manoel:{ativo:true,atual:3,minimo:10},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295797399,nome:'Saquinho maionese',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295847751,nome:'Hf05',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295893593,nome:'Hf02',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:2},manoel:{ativo:true,atual:3,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295929394,nome:'Hf101',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295945386,nome:'Hf102',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:2},manoel:{ativo:true,atual:1,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790295993101,nome:'Papel toalha',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296018117,nome:'Molho de pimenta',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:3},manoel:{ativo:true,atual:1,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296087117,nome:'Saco delivery G',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:3},manoel:{ativo:true,atual:3,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296117551,nome:'Saco Delivery GG',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:2},manoel:{ativo:true,atual:1,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296161423,nome:'Saquinho batata',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296270273,nome:'Pote soba 500ml',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:6,minimo:4},manoel:{ativo:true,atual:6,minimo:4},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296366302,nome:'Pote soba 750ml',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:4,minimo:4},manoel:{ativo:true,atual:4,minimo:4},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296439251,nome:'Pote soba 1000ml',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:4},manoel:{ativo:true,atual:2,minimo:4},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790296506076,nome:'Cebola crispy',categoria:'mercado',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:1},manoel:{ativo:true,atual:1,minimo:1},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790298205891,nome:'Bobina P',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:2},manoel:{ativo:true,atual:1,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790298248656,nome:'Bobina G',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:3,minimo:2},manoel:{ativo:true,atual:3,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790298293216,nome:'Saquinho Reforçado Maionese',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:2},manoel:{ativo:true,atual:1,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300201542,nome:'Detergente',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:6,minimo:20},manoel:{ativo:true,atual:6,minimo:20},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300227703,nome:'Veja',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:3},manoel:{ativo:true,atual:2,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300245853,nome:'Bombril',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:3},manoel:{ativo:true,atual:2,minimo:3},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300263955,nome:'Sabão em pó',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300315498,nome:'Desinfetante',categoria:'mercado',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300350390,nome:'Saco de lixo',categoria:'mercado',medida:'fardo',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:1},manoel:{ativo:true,atual:1,minimo:1},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300371311,nome:'Sacola P',categoria:'embalagem',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300386527,nome:'Sacola G',categoria:'embalagem',medida:'un',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790300475734,nome:'Bucha Amarela',categoria:'mercado',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:2,minimo:2},manoel:{ativo:true,atual:2,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790302055151,nome:'Salsicha',categoria:'frios',medida:'pct',tipo:'ambos',lojas:{principal:{ativo:true,atual:0,minimo:8},manoel:{ativo:true,atual:0,minimo:8},brilhante:{ativo:false,atual:0,minimo:0}}},
+  {id:1790312514348,nome:'Ovo',categoria:'carnes',medida:'cx',tipo:'ambos',lojas:{principal:{ativo:true,atual:1,minimo:2},manoel:{ativo:true,atual:1,minimo:2},brilhante:{ativo:false,atual:0,minimo:0}}}
+];
+
+const contagensIniciais = [
+  { data: '22/09/2025', unidade: 'manoel', tipo: 'Tradicional', qtd: 192, obs: '' },
+  { data: '22/09/2025', unidade: 'brilhante', tipo: 'Tradicional', qtd: 278, obs: '' },
+  { data: '26/09/2025', unidade: 'manoel', tipo: 'Tradicional', qtd: 388, obs: '' },
+  { data: '26/09/2025', unidade: 'brilhante', tipo: 'Tradicional', qtd: 404, obs: '' },
+  { data: '27/09/2025', unidade: 'brilhante', tipo: 'Tradicional', qtd: 428, obs: '' },
+  { data: '28/09/2025', unidade: 'manoel', tipo: 'Tradicional', qtd: 262, obs: '' },
+];
+
+const historicoInicial = [
+  { data: '26/09/2025 00:02', tipo: 'producao', unidade: 'brilhante', descricao: 'Produção 10kg Tradicional — 128 un', cor: '#22c55e' },
+  { data: '26/09/2025 07:51', tipo: 'contagem', unidade: 'manoel', descricao: 'Contagem final: 350 hambúrgueres', cor: '#3b82f6' },
+  { data: '26/09/2025 18:11', tipo: 'saida', unidade: 'manoel', descricao: '⚠️ Batata lavada zerada — reposição urgente', cor: '#e8432d' },
+  { data: '26/09/2025 18:28', tipo: 'entrada', unidade: 'manoel', descricao: 'Recebido: Batata lavada 2,294kg', cor: '#22c55e' },
+  { data: '29/09/2025 13:04', tipo: 'pedido', unidade: 'manoel', descricao: 'Pedido AmBev + Coca confirmado para entrega', cor: '#f5a623' },
+  { data: '30/09/2025 19:25', tipo: 'entrada', unidade: 'manoel', descricao: 'Recebido: Caldo soba 2, cebolas, garrafinhas, HF05, frango, ponta, macarrão', cor: '#22c55e' },
+];
+
+// ==================== INIT ====================
+async function init() {
+  try {
+    state = await EuviPersistence.carregar({
+      produtos: produtosIniciais,
+      listas: { manoel: [], brilhante: [] },
+      producao: [],
+      contagens: contagensIniciais,
+      historico: historicoInicial,
+      filtroEstoque: 'todos',
+      searchEstoque: '',
+      lojaFiltro: 'ambos'
+    }, 'admin');
+    window.EUVI_STATE = state;
+  } catch (e) {
+    console.error(e);
+    resetState();
+    showToast('error', 'Não foi possível sincronizar com o Supabase.');
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('prod-data').value = today;
+  document.getElementById('cont-data').value = today;
+  document.getElementById('ent-data').value = today;
+
+  const now = new Date().toLocaleDateString('pt-BR');
+  document.getElementById('manoel-data').textContent = now;
+  document.getElementById('brilhante-data').textContent = now;
+
+  populateProdutoSelect();
+  renderAll();
+}
+
+function resetState() {
+  state = EuviPersistence.attachAll(EuviPersistence.normalizarPayload({
+    produtos: produtosIniciais,
+    listas: { manoel: [], brilhante: [] },
+    producao: [],
+    contagens: contagensIniciais,
+    historico: historicoInicial,
+    filtroEstoque: 'todos',
+    searchEstoque: '',
+    lojaFiltro: 'ambos'
+  }, null), 'admin');
+  window.EUVI_STATE = state;
+}
+
+async function save() {
+  saveQueue = saveQueue.catch(()=>{}).then(async()=>{
+    try {
+      state = await EuviPersistence.salvar(state, 'admin');
+      window.EUVI_STATE = state;
+      return true;
+    } catch (e) {
+      console.error('Falha ao salvar no Supabase:',e);
+      showToast('error', 'Falha ao salvar no Supabase. Verifique a conexão e tente novamente.');
+      return false;
+    }
+  });
+  return saveQueue;
+}
+
+// ==================== NAVIGATION ====================
+const views = ['dashboard','estoque','pedidos','producao','contagem','historico'];
+const titles = {
+  dashboard: 'Dashboard',
+  estoque: 'Controle de Estoque',
+  pedidos: 'Listas de Pedidos',
+  producao: 'Registro de Produção',
+  contagem: 'Contagem Final',
+  historico: 'Histórico de Movimentações'
+};
+
+function navigate(view) {
+  views.forEach(v => {
+    document.getElementById('view-'+v).classList.toggle('active', v === view);
+  });
+  document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', btn.getAttribute('onclick')?.includes(views[i]) && views[i] === view);
+  });
+  document.getElementById('topbar-title').textContent = titles[view] || view;
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'estoque') renderEstoque();
+  if (view === 'pedidos') renderListas();
+  if (view === 'producao') renderProducao();
+  if (view === 'contagem') renderContagem();
+  if (view === 'historico') renderHistorico();
+}
+
+function renderAll() {
+  renderDashboard();
+  renderEstoque();
+  renderListas();
+  renderProducao();
+  renderContagem();
+  renderHistorico();
+}
+
+// ==================== DASHBOARD ====================
+function renderDashboard() {
+  const criticos = state.produtos.filter(p => p.atual < p.minimo);
+  const urgentes = state.produtos.filter(p => p.atual === 0);
+  const pendentes = state.listas.manoel.filter(i=>!i.entregue).length + state.listas.brilhante.filter(i=>!i.entregue).length;
+
+  const ultimaContagem = state.contagens.slice().reverse();
+  const manoelHoje = ultimaContagem.find(c=>c.unidade==='manoel');
+  const brilhanteHoje = ultimaContagem.find(c=>c.unidade==='brilhante');
+  const totalHoje = (manoelHoje?.qtd || 0) + (brilhanteHoje?.qtd || 0);
+
+  document.getElementById('dash-hamburgueres').textContent = totalHoje > 0 ? totalHoje : '—';
+  document.getElementById('dash-falta').textContent = criticos.length;
+  document.getElementById('dash-pedidos').textContent = pendentes;
+  document.getElementById('dash-urgentes').textContent = urgentes.length;
+
+  document.getElementById('badge-critico').textContent = criticos.length;
+  document.getElementById('badge-pendente').textContent = pendentes;
+
+  // Alertas
+  const alertas = document.getElementById('alertas-container');
+  let html = '';
+  if (urgentes.length > 0) {
+    html += `<div class="alert alert-red"><span class="alert-icon">🚨</span><div><strong>Produto(s) zerado(s):</strong> ${urgentes.map(p=>p.nome).join(', ')} — Repor imediatamente!</div></div>`;
+  }
+  if (criticos.length > urgentes.length) {
+    const outros = criticos.filter(p=>p.atual>0);
+    html += `<div class="alert alert-gold"><span class="alert-icon">⚠️</span><div><strong>Estoque crítico:</strong> ${outros.map(p=>`${p.nome} (${p.atual}/${p.minimo}${p.medida})`).join(', ')}</div></div>`;
+  }
+  alertas.innerHTML = html;
+
+  // Tabela críticos
+  const tbody = document.getElementById('tabela-criticos');
+  if (criticos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">✅ Todos os itens acima do mínimo</td></tr>';
+  } else {
+    tbody.innerHTML = criticos.map(p => `
+      <tr>
+        <td style="font-weight:500">${p.nome}</td>
+        <td><span class="pill pill-${catColor(p.categoria)}">${p.categoria}</span></td>
+        <td>${p.unidade === 'manoel' ? '🔴 Manoel' : p.unidade === 'brilhante' ? '🔵 Brilhante' : '🔴🔵 Ambos'}</td>
+        <td style="font-family:var(--mono);font-weight:600">${p.atual}${p.medida}</td>
+        <td style="font-family:var(--mono);color:var(--muted)">${p.minimo}${p.medida}</td>
+      </tr>`).join('');
+  }
+
+  // Gráfico simples
+  renderGrafico();
+}
+
+function renderGrafico() {
+  const contsPorDia = {};
+  state.contagens.forEach(c => {
+    if (!contsPorDia[c.data]) contsPorDia[c.data] = 0;
+    contsPorDia[c.data] += c.qtd;
+  });
+  const dias = Object.keys(contsPorDia).slice(-7);
+  const max = Math.max(...dias.map(d=>contsPorDia[d]), 1);
+  const el = document.getElementById('grafico-producao');
+  if (dias.length === 0) { el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;font-size:13px;">Nenhuma contagem registrada ainda</div>'; return; }
+  el.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-end;height:120px;padding:16px 20px 0;">
+    ${dias.map(d=>`
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">${contsPorDia[d]}</div>
+        <div style="width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:${Math.round((contsPorDia[d]/max)*80)}px;min-height:4px;transition:height 0.5s;"></div>
+        <div style="font-size:10px;color:var(--muted);white-space:nowrap;">${d.split('/').slice(0,2).join('/')}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+// ==================== FILTRO POR LOJA ====================
+function filtrarPorLoja(loja) {
+  state.lojaFiltro = loja;
+  renderDashboard();
+}
+
+// ==================== ESTOQUE ====================
+function catColor(cat) {
+  const m = {carnes:'red',frios:'blue',verduras:'green',mercado:'gold',embalagem:'gray',bebidas:'blue',outros:'gray'};
+  return m[cat] || 'gray';
+}
+
+function renderEstoque() {
+  const filtro = state.filtroEstoque;
+  const search = (state.searchEstoque||'').toLowerCase();
+  let produtos = state.produtos.filter(p => {
+    if (filtro === 'critico') return p.atual < p.minimo;
+    if (filtro !== 'todos') return p.categoria === filtro;
+    return true;
+  }).filter(p => !search || p.nome.toLowerCase().includes(search));
+
+  // Atualizar banner
+  const criticos = state.produtos.filter(p => p.atual < p.minimo);
+  const banner = document.getElementById('banner-pedido');
+  if (criticos.length > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('banner-texto').textContent =
+      `${criticos.length} item(s) abaixo do mínimo — pedido pendente`;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  const tbody = document.getElementById('tabela-estoque');
+  if (produtos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Nenhum produto encontrado</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = produtos.map(p => {
+    const pct = Math.min(100, Math.round((p.atual / Math.max(p.minimo * 1.5, 1)) * 100));
+    const cor = p.atual === 0 ? '#e8432d' : p.atual < p.minimo ? '#f5a623' : '#22c55e';
+    const status = p.atual === 0 ? 'pill-red' : p.atual < p.minimo ? 'pill-gold' : 'pill-green';
+    const statusTxt = p.atual === 0 ? '🚨 Zerado' : p.atual < p.minimo ? '⚠️ Crítico' : '✅ OK';
+    const precisaPedir = p.atual < p.minimo;
+    const qtdPedir = Math.max(0, p.minimo - p.atual);
+
+    return `<tr style="${precisaPedir ? 'background:rgba(232,67,45,0.04)' : ''}">
+      <td>
+        <div style="font-weight:600;font-size:13px">${p.nome}</div>
+        ${precisaPedir ? `<div style="font-size:11px;color:var(--accent2);margin-top:2px">Pedir: ${qtdPedir}${p.medida} para atingir o mínimo</div>` : ''}
+      </td>
+      <td><span class="pill pill-${catColor(p.categoria)}">${p.categoria}</span></td>
+      <td style="color:var(--muted);font-size:12px">${p.unidade === 'manoel' ? '🔴 Manoel' : p.unidade === 'brilhante' ? '🔵 Brilhante' : '🔴🔵 Ambos'}</td>
+      <td style="font-family:var(--mono);font-weight:700;color:${cor}">${p.atual}${p.medida}</td>
+      <td style="font-family:var(--mono);color:var(--muted)">${p.minimo}${p.medida}</td>
+      <td>
+        <div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${pct}%</div>
+      </td>
+      <td><span class="pill ${status}">${statusTxt}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="btn btn-ghost btn-sm" onclick="ajustarEstoque(${p.id},-1)" title="−1" style="padding:4px 10px;font-size:16px;font-weight:700;">−</button>
+          <input
+            type="number"
+            value="${p.atual}"
+            min="0"
+            step="0.5"
+            style="width:64px;text-align:center;background:var(--surface2);border:1px solid ${precisaPedir?'var(--accent)':'var(--border)'};border-radius:6px;color:var(--text);font-family:var(--mono);font-size:13px;font-weight:600;padding:4px 6px;outline:none;"
+            onchange="setEstoque(${p.id}, this.value)"
+            onfocus="this.select()"
+            title="Digitar quantidade exata"
+          />
+          <button class="btn btn-ghost btn-sm" onclick="ajustarEstoque(${p.id},1)" title="+1" style="padding:4px 10px;font-size:16px;font-weight:700;">+</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirEditarProduto(${p.id})" title="Editar produto" style="padding:4px 8px;">✏️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterEstoque(cat, btn) {
+  state.filtroEstoque = cat;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderEstoque();
+}
+
+function searchEstoque(val) {
+  state.searchEstoque = val;
+  renderEstoque();
+}
+
+function ajustarEstoque(id, delta) {
+  const p = state.produtos.find(x=>x.id===id);
+  if (!p) return;
+  const antes = p.atual;
+  p.atual = Math.max(0, +(p.atual + delta).toFixed(2));
+  addHistorico(delta > 0 ? 'entrada' : 'saida', p.unidade,
+    `${delta>0?'Entrada':'Saída'} manual: ${p.nome} (${delta>0?'+':''}${delta}${p.medida}) — ${antes}→${p.atual}${p.medida}`,
+    delta > 0 ? '#22c55e' : '#f5a623');
+  save();
+  renderEstoque();
+  renderDashboard();
+  showToast(delta>0?'success':'', `${p.nome}: ${p.atual}${p.medida}`);
+}
+
+function setEstoque(id, valor) {
+  const p = state.produtos.find(x=>x.id===id);
+  if (!p) return;
+  const antes = p.atual;
+  const novo = Math.max(0, parseFloat(valor)||0);
+  p.atual = novo;
+  const delta = novo - antes;
+  addHistorico(delta >= 0 ? 'entrada' : 'saida', p.unidade,
+    `Atualização manual: ${p.nome} ${antes}→${novo}${p.medida}`,
+    delta >= 0 ? '#22c55e' : '#f5a623');
+  save();
+  renderEstoque();
+  renderDashboard();
+  showToast('success', `${p.nome} atualizado: ${novo}${p.medida}${p.atual < p.minimo ? ' ⚠️ Abaixo do mínimo' : ''}`);
+}
+
+// ==================== EDITAR PRODUTO ====================
+function abrirEditarProduto(id) {
+  const p = state.produtos.find(x=>x.id===id);
+  if (!p) return;
+  document.getElementById('ep-id').value = p.id;
+  document.getElementById('ep-nome').value = p.nome;
+  document.getElementById('ep-categoria').value = p.categoria;
+  document.getElementById('ep-medida').value = p.medida;
+  document.getElementById('ep-atual').value = p.atual;
+  document.getElementById('ep-minimo').value = p.minimo;
+  document.getElementById('ep-unidade').value = p.unidade || 'ambos';
+  openModal('modal-editar-produto');
+}
+
+function salvarEdicaoProduto() {
+  const id = parseInt(document.getElementById('ep-id').value);
+  const p = state.produtos.find(x=>x.id===id);
+  if (!p) return;
+  const novoAtual = parseFloat(document.getElementById('ep-atual').value)||0;
+  const novoMin = parseFloat(document.getElementById('ep-minimo').value)||0;
+  const antes = p.atual;
+  p.nome = document.getElementById('ep-nome').value.trim() || p.nome;
+  p.categoria = document.getElementById('ep-categoria').value;
+  p.medida = document.getElementById('ep-medida').value;
+  p.atual = novoAtual;
+  p.minimo = novoMin;
+  p.unidade = document.getElementById('ep-unidade').value;
+  if (antes !== novoAtual) {
+    addHistorico('entrada', p.unidade, `Edição: ${p.nome} ${antes}→${novoAtual}${p.medida} (mínimo: ${novoMin}${p.medida})`, '#3b82f6');
+  }
+  save();
+  closeModal('modal-editar-produto');
+  renderEstoque();
+  renderDashboard();
+  populateProdutoSelect();
+  showToast('success', `${p.nome} atualizado!`);
+}
+
+// ==================== PEDIDO WHATSAPP ====================
+let pedidoSelecionados = {};
+
+function openModalPedidoWhats() {
+  pedidoSelecionados = {};
+  // Pré-selecionar todos os críticos
+  state.produtos.filter(p=>p.atual<p.minimo).forEach(p=>{ pedidoSelecionados[p.id] = true; });
+  renderPreviewWhats();
+  openModal('modal-pedido-whats');
+}
+
+function getProdutosFiltradosPedido() {
+  const unid = document.getElementById('pw-unidade')?.value || 'ambos';
+  const filtro = document.getElementById('pw-filtro')?.value || 'criticos';
+  return state.produtos.filter(p => {
+    // filtro unidade
+    if (unid !== 'ambos') {
+      if (p.unidade !== 'ambos' && p.unidade !== unid) return false;
+    }
+    // filtro status
+    if (filtro === 'criticos') return p.atual < p.minimo;
+    if (filtro === 'zerados') return p.atual === 0;
+    return true;
+  });
+}
+
+function renderPreviewWhats() {
+  const unid = document.getElementById('pw-unidade')?.value || 'ambos';
+  const produtos = getProdutosFiltradosPedido();
+
+  // Atualizar seleção inicial (só não-marcados manuais)
+  produtos.forEach(p => {
+    if (pedidoSelecionados[p.id] === undefined) pedidoSelecionados[p.id] = p.atual < p.minimo;
+  });
+
+  // Render checklist
+  const cl = document.getElementById('pw-checklist');
+  if (!cl) return;
+  cl.innerHTML = produtos.map(p => {
+    const qtdPedir = Math.max(1, p.minimo - p.atual);
+    const checked = pedidoSelecionados[p.id] !== false;
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;background:${checked?'rgba(232,67,45,0.07)':'transparent'};border:1px solid ${checked?'rgba(232,67,45,0.25)':'var(--border)'};font-size:13px;transition:all 0.1s;">
+      <input type="checkbox" ${checked?'checked':''} style="accent-color:var(--accent);" onchange="togglePedidoItem(${p.id}, this.checked)" />
+      <span style="flex:1;font-weight:500">${p.nome}</span>
+      <span style="font-family:var(--mono);font-size:12px;color:var(--accent2)">${qtdPedir}${p.medida}</span>
+      <span style="font-size:11px;color:var(--muted)">(atual: ${p.atual}${p.medida} / mín: ${p.minimo}${p.medida})</span>
+    </label>`;
+  }).join('');
+
+  atualizarPreviewTexto(unid, produtos);
+}
+
+function togglePedidoItem(id, checked) {
+  pedidoSelecionados[id] = checked;
+  const unid = document.getElementById('pw-unidade')?.value || 'ambos';
+  const produtos = getProdutosFiltradosPedido();
+  atualizarPreviewTexto(unid, produtos);
+  // Atualizar cor do label
+  const labels = document.querySelectorAll('#pw-checklist label');
+  labels.forEach(label => {
+    const cb = label.querySelector('input');
+    if (cb && parseInt(label.querySelector('input').getAttribute('onchange').match(/\d+/)?.[0]) === id) {
+      label.style.background = checked ? 'rgba(232,67,45,0.07)' : 'transparent';
+      label.style.border = `1px solid ${checked ? 'rgba(232,67,45,0.25)' : 'var(--border)'}`;
+    }
+  });
+  renderPreviewWhats();
+}
+
+function atualizarPreviewTexto(unid, produtos) {
+  const data = new Date().toLocaleDateString('pt-BR');
+  const selecionados = produtos.filter(p => pedidoSelecionados[p.id]);
+
+  if (selecionados.length === 0) {
+    document.getElementById('preview-whats').textContent = 'Nenhum item selecionado.';
+    return;
+  }
+
+  // Agrupar por categoria
+  const grupos = {};
+  selecionados.forEach(p => {
+    const cat = p.categoria.charAt(0).toUpperCase() + p.categoria.slice(1);
+    if (!grupos[cat]) grupos[cat] = [];
+    const qtdPedir = Math.max(1, p.minimo - p.atual);
+    grupos[cat].push(`${p.nome} ${qtdPedir}${p.medida}`);
+  });
+
+  const nomeUnid = unid === 'manoel' ? 'Manoel' : unid === 'brilhante' ? 'Brilhante' : 'Manoel e Brilhante';
+  let msg = `*Lista ${nomeUnid} ${data}*\n\n`;
+
+  Object.entries(grupos).forEach(([cat, items]) => {
+    msg += `*${cat}*\n`;
+    items.forEach(i => { msg += `${i}\n`; });
+    msg += '\n';
+  });
+
+  msg += `_Enviado pelo OBA Gestão_`;
+  document.getElementById('preview-whats').textContent = msg;
+}
+
+function copiarMensagem() {
+  const txt = document.getElementById('preview-whats').textContent;
+  navigator.clipboard.writeText(txt).then(() => showToast('success', 'Texto copiado!'));
+}
+
+function abrirWhatsApp() {
+  const txt = document.getElementById('preview-whats').textContent;
+  const encoded = encodeURIComponent(txt);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+
+function cadastrarProduto() {
+  const nome = document.getElementById('np-nome').value.trim();
+  const cat = document.getElementById('np-categoria').value;
+  const medida = document.getElementById('np-medida').value;
+  const atual = parseFloat(document.getElementById('np-atual').value)||0;
+  const minimo = parseFloat(document.getElementById('np-minimo').value)||5;
+  if (!nome) { showToast('error','Nome obrigatório'); return; }
+  const id = Date.now();
+  state.produtos.push(EuviPersistence.attachAll({produtos:[EuviPersistence.normalizarProduto({ id, nome, categoria: cat, medida, atual, minimo, unidade: 'ambos' })]}, 'admin').produtos[0]);
+  populateProdutoSelect();
+  save();
+  closeModal('modal-produto');
+  renderEstoque();
+  renderDashboard();
+  showToast('success', `${nome} cadastrado!`);
+  document.getElementById('np-nome').value = '';
+}
+
+// ==================== LISTAS ====================
+function renderListas() {
+  ['manoel','brilhante'].forEach(unid => {
+    const container = document.getElementById('lista-'+unid);
+    const items = state.listas[unid];
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="empty" style="padding:20px"><div class="empty-text" style="font-size:12px">Nenhum item</div></div>';
+      return;
+    }
+    container.innerHTML = items.map((item, idx) => `
+      <div class="lista-item ${item.entregue?'checked':''}" id="item-${unid}-${idx}">
+        <input type="checkbox" ${item.entregue?'checked':''} onchange="toggleItem('${unid}',${idx},this.checked)" />
+        <span>${item.nome}</span>
+        ${item.urgente ? '<span class="urgente-tag">urgente</span>' : ''}
+        <span class="lista-item-qty">${item.qty ? item.qty + ' ' + (item.und||'') : ''}</span>
+        <button onclick="removeItem('${unid}',${idx})" style="background:none;border:none;color:var(--subtle);cursor:pointer;font-size:14px;padding:0 4px;" title="Remover">✕</button>
+      </div>`).join('');
+  });
+}
+
+function addItem(unid) {
+  const input = document.getElementById('input-'+unid);
+  const qtyInput = document.getElementById('qty-'+unid);
+  const nome = input.value.trim();
+  if (!nome) return;
+  const qty = qtyInput.value.trim();
+  const urgente = nome.toLowerCase().includes('urgente');
+  state.listas[unid].push({ nome: nome.replace(/\(urgente\)/gi,'').trim(), qty, urgente, entregue: false });
+  input.value = '';
+  qtyInput.value = '';
+  addHistorico('pedido', unid, `Item adicionado à lista ${unid}: ${nome}`, '#f5a623');
+  save();
+  renderListas();
+}
+
+function removeItem(unid, idx) {
+  state.listas[unid].splice(idx, 1);
+  save();
+  renderListas();
+}
+
+function toggleItem(unid, idx, checked) {
+  state.listas[unid][idx].entregue = checked;
+  if (checked) {
+    addHistorico('entrada', unid, `Entregue: ${state.listas[unid][idx].nome} ${state.listas[unid][idx].qty||''}`, '#22c55e');
+  }
+  save();
+  renderListas();
+}
+
+function confirmarEntrega() {
+  ['manoel','brilhante'].forEach(unid => {
+    state.listas[unid] = state.listas[unid].filter(i=>!i.entregue);
+  });
+  save();
+  renderListas();
+  showToast('success','Itens entregues removidos das listas!');
+}
+
+function limparListas() {
+  if (!confirm('Limpar todas as listas?')) return;
+  state.listas = { manoel: [], brilhante: [] };
+  save();
+  renderListas();
+}
+
+function openNovaLista() {
+  document.getElementById('input-manoel').focus();
+}
+
+function gerarRelatorio() {
+  let txt = `=== LISTA DE PEDIDOS OBA BURGER ===\n${new Date().toLocaleString('pt-BR')}\n\n`;
+  txt += `📍 MANOEL\n${'─'.repeat(30)}\n`;
+  state.listas.manoel.forEach(i => txt += `${i.entregue?'[✓]':'[ ]'} ${i.nome}${i.qty?' — '+i.qty:''}${i.urgente?' ⚠️ URGENTE':''}\n`);
+  txt += `\n📍 BRILHANTE\n${'─'.repeat(30)}\n`;
+  state.listas.brilhante.forEach(i => txt += `${i.entregue?'[✓]':'[ ]'} ${i.nome}${i.qty?' — '+i.qty:''}${i.urgente?' ⚠️ URGENTE':''}\n`);
+  const blob = new Blob([txt], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `lista-pedidos-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.txt`;
+  a.click();
+  showToast('success','Lista exportada!');
+}
+
+// ==================== PRODUÇÃO ====================
+function registrarProducao() {
+  const unid = document.getElementById('prod-unidade').value;
+  const data = document.getElementById('prod-data').value;
+  const tipo = document.getElementById('prod-tipo').value;
+  const kg = parseFloat(document.getElementById('prod-kg').value)||0;
+  const qtd = parseInt(document.getElementById('prod-qtd').value)||0;
+  if (!data || (!kg && !qtd)) { showToast('error','Preencha os campos'); return; }
+  state.producao.push({ unid, data, tipo, kg, qtd, ts: Date.now() });
+  addHistorico('producao', unid, `Produção ${tipo}: ${kg}kg → ${qtd} un`, '#22c55e');
+  save();
+  renderProducao();
+  showToast('success',`Produção registrada: ${qtd} un`);
+  document.getElementById('prod-kg').value = '';
+  document.getElementById('prod-qtd').value = '';
+}
+
+function renderProducao() {
+  const today = document.getElementById('prod-data').value;
+  const todayFmt = today ? new Date(today+'T12:00:00').toLocaleDateString('pt-BR') : '';
+  const hoje = state.producao.filter(p => {
+    const d = new Date(p.data+'T12:00:00').toLocaleDateString('pt-BR');
+    return d === todayFmt;
+  });
+  const container = document.getElementById('producao-hoje');
+  if (hoje.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">🥩</div><div class="empty-text">Nenhum registro hoje</div></div>';
+    return;
+  }
+  container.innerHTML = hoje.map(p => `
+    <div class="float-row">
+      <div class="float-key">${p.unid === 'manoel' ? '🔴 Manoel' : '🔵 Brilhante'}</div>
+      <div class="float-val">${p.tipo}</div>
+      <div style="margin-left:auto;display:flex;gap:16px;">
+        <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">${p.kg}kg</span>
+        <span class="pill pill-green">${p.qtd} un</span>
+      </div>
+    </div>`).join('');
+}
+
+// ==================== CONTAGEM ====================
+function registrarContagem() {
+  const unidade = document.getElementById('cont-unidade').value;
+  const data = document.getElementById('cont-data').value;
+  const tipo = document.getElementById('cont-tipo').value;
+  const qtd = parseInt(document.getElementById('cont-qtd').value)||0;
+  const obs = document.getElementById('cont-obs').value;
+  if (!data || !qtd) { showToast('error','Preencha data e quantidade'); return; }
+  const dataFmt = new Date(data+'T12:00:00').toLocaleDateString('pt-BR');
+  state.contagens.push({ data: dataFmt, unidade, tipo, qtd, obs });
+  addHistorico('contagem', unidade, `Contagem final ${tipo}: ${qtd} un${obs?' — '+obs:''}`, '#3b82f6');
+  save();
+  renderContagem();
+  renderDashboard();
+  showToast('success',`Contagem registrada: ${qtd} un`);
+  document.getElementById('cont-qtd').value = '';
+  document.getElementById('cont-obs').value = '';
+}
+
+function renderContagem() {
+  const last = [...state.contagens].reverse();
+  const m = last.find(c=>c.unidade==='manoel');
+  const b = last.find(c=>c.unidade==='brilhante');
+  document.getElementById('cont-manoel').textContent = m ? m.qtd : '—';
+  document.getElementById('cont-brilhante').textContent = b ? b.qtd : '—';
+
+  const tbody = document.getElementById('tabela-contagens');
+  if (state.contagens.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Nenhuma contagem registrada</td></tr>';
+    return;
+  }
+  tbody.innerHTML = [...state.contagens].reverse().map(c => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:12px">${c.data}</td>
+      <td>${c.unidade === 'manoel' ? '🔴 Manoel' : '🔵 Brilhante'}</td>
+      <td>${c.tipo}</td>
+      <td style="font-family:var(--mono);font-weight:700;font-size:16px">${c.qtd}</td>
+      <td style="color:var(--muted);font-size:12px">${c.obs||'—'}</td>
+    </tr>`).join('');
+}
+
+// ==================== HISTÓRICO ====================
+function addHistorico(tipo, unidade, descricao, cor) {
+  const now = new Date();
+  const data = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  state.historico.unshift({ data, tipo, unidade, descricao, cor });
+  if (state.historico.length > 200) state.historico.pop();
+}
+
+function renderHistorico() {
+  const fu = document.getElementById('filter-unidade-hist').value;
+  const ft = document.getElementById('filter-tipo-hist').value;
+  let items = state.historico.filter(h => {
+    if (fu && h.unidade !== fu && h.unidade !== 'ambos') return false;
+    if (ft && h.tipo !== ft) return false;
+    return true;
+  });
+  const container = document.getElementById('historico-timeline');
+  if (items.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><div class="empty-text">Nenhum registro encontrado</div></div>';
+    return;
+  }
+  container.innerHTML = items.slice(0,50).map(h => `
+    <div class="timeline-item">
+      <div class="timeline-time">${h.data}</div>
+      <div class="timeline-dot" style="background:${h.cor||'#888'}"></div>
+      <div class="timeline-content">
+        ${h.descricao}
+        <div class="timeline-who">${h.unidade === 'manoel' ? '🔴 Manoel' : h.unidade === 'brilhante' ? '🔵 Brilhante' : '🔴🔵 Ambos'} · ${h.tipo}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ==================== ENTRADA MODAL ====================
+function populateProdutoSelect() {
+  const sel = document.getElementById('ent-produto');
+  sel.innerHTML = state.produtos.map(p=>`<option value="${p.id}">${p.nome} (${p.atual}${p.medida})</option>`).join('');
+}
+
+function darEntrada() {
+  const unid = document.getElementById('ent-unidade').value;
+  const pid = parseInt(document.getElementById('ent-produto').value);
+  const qtd = parseFloat(document.getElementById('ent-qtd').value)||0;
+  const forn = document.getElementById('ent-fornecedor').value;
+  const obs = document.getElementById('ent-obs').value;
+  if (!qtd) { showToast('error','Informe a quantidade'); return; }
+  const p = state.produtos.find(x=>x.id===pid);
+  if (!p) return;
+  p.atual += qtd;
+  addHistorico('entrada', unid, `Entrada: ${p.nome} +${qtd}${p.medida}${forn?' ('+forn+')':''}${obs?' — '+obs:''}`, '#22c55e');
+  save();
+  populateProdutoSelect();
+  closeModal('modal-entrada');
+  renderAll();
+  showToast('success',`${p.nome}: +${qtd}${p.medida} → Total: ${p.atual}${p.medida}`);
+  document.getElementById('ent-qtd').value = '';
+  document.getElementById('ent-fornecedor').value = '';
+  document.getElementById('ent-obs').value = '';
+}
+
+// ==================== MODAL / UI ====================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : 'ℹ️ ') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ==================== FASE 1 + FASES 2/3 — APP MOBILE ====================
+let unidadeAtiva = 'principal';
+window.unidadeAtiva = unidadeAtiva;
+
+let motivoPerdaAtivo = 'limpeza';
+let receitaEditandoId = null;
+let receitaPreSelecionada = null;
+let saveQueue = Promise.resolve();
+
+function escapeHTML(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function unidadesConfig(){return Array.isArray(state?.config?.stores)?state.config.stores:[];}
+function unidadesAtivas(){return unidadesConfig().filter(x=>x.ativo!==false);}
+function nomeDaUnidade(id){return unidadesConfig().find(x=>x.id===id)?.nome||id||'Unidade';}
+function tipoDaUnidade(id){return unidadesConfig().find(x=>x.id===id)?.tipo||'geral';}
+function aplicarConfiguracaoApp(){
+  const nome=String(state?.config?.appName||'Euvi Gestão').trim()||'Euvi Gestão';
+  const title=document.getElementById('app-name-title');if(title)title.textContent=nome;
+  document.title=nome+' — Controle de Estoque';
+  const field=document.getElementById('config-app-name');if(field&&document.activeElement!==field)field.value=nome;
+}
+function renderSeletorUnidades(){
+  const sel=document.getElementById('unidade-select');if(!sel)return;
+  const stores=unidadesAtivas();
+  if(!stores.length)return;
+  if(!stores.some(x=>x.id===unidadeAtiva))unidadeAtiva=stores[0].id;
+  window.unidadeAtiva=unidadeAtiva;
+  sel.innerHTML=stores.map(x=>`<option value="${escapeHTML(x.id)}">${escapeHTML(x.nome)}</option>`).join('');
+  sel.value=unidadeAtiva;
+}
+function renderConfiguracoes(){
+  const list=document.getElementById('config-store-list');if(!list)return;
+  list.innerHTML=unidadesConfig().map(store=>`<div class="config-store" data-store="${escapeHTML(store.id)}"><div class="config-store-head"><span>${escapeHTML(store.nome)}</span><span class="store-badge">${store.tipo==='adega'?'Adega / bebidas':'Loja geral'}</span></div><div class="config-store-grid"><div><label class="input-label" for="config-store-name-${escapeHTML(store.id)}">Nome</label><input class="input-field" id="config-store-name-${escapeHTML(store.id)}" maxlength="60" value="${escapeHTML(store.nome)}"></div><div><label class="input-label" for="config-store-kind-${escapeHTML(store.id)}">Perfil</label><select class="select-field" id="config-store-kind-${escapeHTML(store.id)}"><option value="geral" ${store.tipo!=='adega'?'selected':''}>Loja geral</option><option value="adega" ${store.tipo==='adega'?'selected':''}>Adega / bebidas</option></select></div></div><button class="btn full-btn" onclick="salvarUnidade('${escapeHTML(store.id)}')">Salvar unidade</button></div>`).join('');
+}
+function idSeguroUnidade(nome){
+  let base=String(nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9_-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,34)||'unidade';
+  if(!/^[a-z]/.test(base))base='loja-'+base;
+  const ids=new Set(unidadesConfig().map(x=>x.id));
+  if(ids.has(base))base=base+'-'+Date.now().toString(36).slice(-5);
+  let suffix=2, candidate=base;while(ids.has(candidate)){candidate=base+'-'+suffix++;}return candidate;
+}
+async function salvarNomeAplicativo(){
+  const input=document.getElementById('config-app-name'),nome=String(input?.value||'').trim();
+  if(!nome){showToast('error','Informe um nome para o sistema.');input?.focus();return}
+  state.config=state.config||{stores:[]};state.config.appName=nome.slice(0,60);
+  const saved=await save();if(!saved)return;aplicarConfiguracaoApp();showToast('success','Nome do sistema salvo.');
+}
+async function adicionarUnidade(){
+  const input=document.getElementById('config-store-name'),nome=String(input?.value||'').trim(),tipo=document.getElementById('config-store-type')?.value==='adega'?'adega':'geral';
+  if(!nome){showToast('error','Digite o nome da unidade.');input?.focus();return}
+  if(unidadesConfig().some(x=>x.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR'))){showToast('error','Já existe uma unidade com esse nome.');return}
+  if(unidadesConfig().length>=30){showToast('error','Limite de 30 unidades atingido.');return}
+  const id=idSeguroUnidade(nome);state.config=state.config||{appName:'Euvi Gestão',stores:[]};
+  state.config.stores.push({id,nome:nome.slice(0,60),tipo,ativo:true});
+  state.produtos.forEach(p=>{p.lojas=p.lojas||{};if(!p.lojas[id])p.lojas[id]=EuviPersistence.lojaDefault(false)});
+  const saved=await save();if(!saved)return;input.value='';renderSeletorUnidades();renderConfiguracoes();aplicarConfiguracaoApp();
+  showToast('success',`Unidade “${nome}” adicionada. Selecione-a no topo para lançar estoque.`);
+}
+async function salvarUnidade(id){
+  const store=unidadesConfig().find(x=>x.id===id);if(!store)return;
+  const nome=String(document.getElementById('config-store-name-'+id)?.value||'').trim();
+  const tipo=document.getElementById('config-store-kind-'+id)?.value==='adega'?'adega':'geral';
+  if(!nome){showToast('error','O nome da unidade não pode ficar vazio.');return}
+  if(unidadesConfig().some(x=>x.id!==id&&x.nome.toLocaleLowerCase('pt-BR')===nome.toLocaleLowerCase('pt-BR'))){showToast('error','Já existe uma unidade com esse nome.');return}
+  store.nome=nome.slice(0,60);store.tipo=tipo;
+  const saved=await save();if(!saved)return;renderSeletorUnidades();renderConfiguracoes();aplicarConfiguracaoApp();showToast('success','Unidade atualizada.');
+}
+function abrirCadastrarProdutoBebida(){abrirCadastrarProduto();const cat=document.getElementById('np-categoria');if(cat)cat.value='bebidas';const med=document.getElementById('np-medida');if(med)med.value='un';}
+function unidadeStore(v){ return unidadesAtivas().some(x=>x.id===v) ? v : (unidadesAtivas()[0]?.id||'principal'); }
+function trocarUnidade(v){
+  unidadeAtiva=unidadeStore(v); window.unidadeAtiva=unidadeAtiva; state.lojaFiltro=unidadeAtiva;
+  const sel=document.getElementById('unidade-select'); if(sel) sel.value=unidadeAtiva;
+  renderSeletorUnidades(); renderMobileDashboard(); renderMobileEstoque(); renderBebidas(); renderPerdas();
+  if(document.getElementById('view-producao')?.classList.contains('active')) renderProducaoMobile();
+}
+function lojaProduto(p, loja=unidadeAtiva){
+  if(!p.lojas) p.lojas={};
+  if(!p.lojas[loja]) p.lojas[loja]=EuviPersistence.lojaDefault(false);
+  return p.lojas[loja];
+}
+function produtoAtivo(p){ return lojaProduto(p,unidadeAtiva).ativo !== false; }
+function produtosUnidade(){ state.lojaFiltro=unidadeAtiva; return state.produtos.filter(produtoAtivo); }
+function statusProduto(p){ const l=lojaProduto(p); if(l.atual===0&&l.minimo>0)return{c:'red',t:'Crítico'}; if(l.atual<l.minimo)return{c:'gold',t:'Atenção'}; return{c:'green',t:'OK'}; }
+function catEmoji(cat){return({carnes:'🥩',frios:'🧀',verduras:'🥬',mercado:'🛒',embalagem:'📦',bebidas:'🥤',outros:'📦'})[cat]||'📦';}
+function renderMobileDashboard(){
+  const ps=produtosUnidade(); const criticos=ps.filter(p=>{const l=lojaProduto(p);return l.atual===0&&l.minimo>0}); const atencao=ps.filter(p=>{const l=lojaProduto(p);return l.atual>0&&l.atual<l.minimo}); const ok=ps.filter(p=>lojaProduto(p).atual>=lojaProduto(p).minimo);
+  document.getElementById('dash-criticos').textContent=criticos.length; document.getElementById('dash-atencao').textContent=atencao.length; document.getElementById('dash-ok').textContent=ok.length;
+  const all=[...criticos,...atencao], list=document.getElementById('critical-list');
+  list.innerHTML=all.length?all.map(p=>{const l=lojaProduto(p),s=statusProduto(p);return `<div class="critical-item"><div class="product-icon">${p.icone||catEmoji(p.categoria)}</div><div class="product-info"><div class="product-name">${escapeHTML(p.nome)}</div><div class="product-meta">${escapeHTML(p.medida)}</div></div><div><div class="stock-value">${l.atual}/${l.minimo}</div><div class="status ${s.c}">● ${s.t}</div></div></div>`}).join(''):'<div class="empty" style="padding:28px 8px;color:var(--green)">✓ Todos os produtos estão acima do mínimo</div>';
+  document.getElementById('alertas-container').innerHTML=criticos.length?`<div class="banner">⚠️ ${criticos.length} produto(s) zerado(s) nesta unidade.</div>`:'';
+}
+function renderMobileEstoque(){
+  const q=(state.searchEstoque||'').toLowerCase(),cat=state.filtroEstoque||'todos'; let ps=produtosUnidade().filter(p=>p.nome.toLowerCase().includes(q));
+  if(cat==='critico')ps=ps.filter(p=>{const l=lojaProduto(p);return l.atual<l.minimo}); else if(cat!=='todos')ps=ps.filter(p=>p.categoria===cat);
+  const el=document.getElementById('mobile-stock-list');
+  el.innerHTML=ps.length?ps.map(p=>{const l=lojaProduto(p),s=statusProduto(p),pct=Math.min(100,Math.round((l.atual/Math.max(l.minimo*1.5,1))*100));return `<article class="stock-card"><div class="stock-top"><div class="product-icon">${p.icone||catEmoji(p.categoria)}</div><div class="stock-main"><div class="stock-name">${escapeHTML(p.nome)}</div><div class="stock-cat">${escapeHTML(p.categoria)} · ${escapeHTML(p.medida)} · ${escapeHTML(p.tipo||'ambos')}</div></div><div class="stock-number ${s.c}">${l.atual}${p.medida}</div></div><div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${s.c==='red'?'#ef4444':s.c==='gold'?'#f59e0b':'#22c55e'}"></div></div><div class="stock-controls"><button class="qty-btn" onclick="ajustarEstoque(${p.id},-1)">−</button><input class="qty-input" type="number" value="${l.atual}" min="0" step="0.5" onchange="setEstoque(${p.id},this.value)" onfocus="this.select()"><button class="qty-btn" onclick="ajustarEstoque(${p.id},1)">+</button><button class="edit-btn" onclick="abrirEditarProduto(${p.id})">✎</button></div></article>`}).join(''):'<div class="empty" style="padding:40px 10px;color:var(--muted)">Nenhum produto encontrado.</div>';
+}
+function renderBebidas(){
+  const title=document.getElementById('bebidas-page-title');if(title)title.textContent=tipoDaUnidade(unidadeAtiva)==='adega'?'Bebidas · '+nomeDaUnidade(unidadeAtiva):'Bebidas';
+  const search=(document.getElementById('bebidas-search')?.value||'').trim().toLocaleLowerCase('pt-BR');
+  const box=document.getElementById('mobile-drink-list');if(!box)return;
+  const ps=produtosUnidade().filter(p=>p.categoria==='bebidas'&&String(p.nome||'').toLocaleLowerCase('pt-BR').includes(search));
+  box.innerHTML=ps.length?ps.map(p=>{const l=lojaProduto(p),st=statusProduto(p),pct=Math.min(100,Math.round((l.atual/Math.max(l.minimo*1.5,1))*100));return `<article class="stock-card"><div class="stock-top"><div class="product-icon">${escapeHTML(p.icone||catEmoji(p.categoria))}</div><div class="stock-main"><div class="stock-name">${escapeHTML(p.nome)}</div><div class="stock-cat">Bebidas · ${escapeHTML(p.medida)} · ${escapeHTML(p.tipo||'ambos')}</div></div><div class="stock-number ${st.c}">${escapeHTML(l.atual)}${escapeHTML(p.medida)}</div></div><div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${st.c==='red'?'#ef4444':st.c==='gold'?'#f59e0b':'#22c55e'}"></div></div><div class="stock-controls"><button class="qty-btn" onclick="ajustarEstoque(${Number(p.id)},-1)" aria-label="Diminuir ${escapeHTML(p.nome)}">−</button><input class="qty-input" aria-label="Quantidade ${escapeHTML(p.nome)}" type="number" value="${escapeHTML(l.atual)}" min="0" step="0.5" onchange="setEstoque(${Number(p.id)},this.value)" onfocus="this.select()"><button class="qty-btn" onclick="ajustarEstoque(${Number(p.id)},1)" aria-label="Aumentar ${escapeHTML(p.nome)}">+</button><button class="edit-btn" onclick="abrirEditarProduto(${Number(p.id)})" aria-label="Editar ${escapeHTML(p.nome)}">✎</button></div></article>`}).join(''):'<div class="empty" style="padding:40px 10px;color:var(--muted)">Nenhuma bebida cadastrada nesta unidade. Use “＋ Bebida” para começar.</div>';
+}
+function filterEstoque(cat,btn){state.filtroEstoque=cat;document.querySelectorAll('#mobile-categories .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderMobileEstoque()}
+function searchEstoque(v){state.searchEstoque=v;renderMobileEstoque()}
+function ajustarEstoque(id,delta){const p=state.produtos.find(x=>x.id===id);if(!p)return;const l=lojaProduto(p),antes=l.atual;l.atual=Math.max(0,+(l.atual+delta).toFixed(2));l.ativo=true;addHistorico(delta>0?'entrada':'saida',unidadeAtiva,`${delta>0?'Entrada':'Saída'} manual: ${p.nome} (${delta>0?'+':''}${delta}${p.medida}) — ${antes}→${l.atual}${p.medida}`,delta>0?'#22c55e':'#f5a623');save();renderMobileEstoque();renderBebidas();renderMobileDashboard();showToast(delta>0?'success':'info',`${p.nome}: ${l.atual}${p.medida}`)}
+function setEstoque(id,valor){const p=state.produtos.find(x=>x.id===id);if(!p)return;const l=lojaProduto(p),antes=l.atual,novo=Math.max(0,parseFloat(valor)||0);l.atual=novo;l.ativo=true;addHistorico(novo>=antes?'entrada':'saida',unidadeAtiva,`Atualização manual: ${p.nome} ${antes}→${novo}${p.medida}`,novo>=antes?'#22c55e':'#f5a623');save();renderMobileEstoque();renderBebidas();renderMobileDashboard();showToast('success',`${p.nome} atualizado`)}
+function abrirEditarProduto(id){const p=state.produtos.find(x=>x.id===id);if(!p)return;const l=lojaProduto(p);document.getElementById('ep-id').value=p.id;document.getElementById('ep-nome').value=p.nome;document.getElementById('ep-categoria').value=p.categoria;document.getElementById('ep-medida').value=p.medida;document.getElementById('ep-icone').value=p.icone||'';document.getElementById('ep-atual').value=l.atual;document.getElementById('ep-minimo').value=l.minimo;document.getElementById('ep-unidade').value=unidadeAtiva;openModal('modal-editar-produto')}
+function salvarEdicaoProduto(){const id=Number(document.getElementById('ep-id').value),p=state.produtos.find(x=>x.id===id);if(!p)return;const l=lojaProduto(p),antes=l.atual;p.nome=document.getElementById('ep-nome').value.trim()||p.nome;p.categoria=document.getElementById('ep-categoria').value;p.medida=document.getElementById('ep-medida').value;p.icone=document.getElementById('ep-icone').value.trim();l.atual=Math.max(0,parseFloat(document.getElementById('ep-atual').value)||0);l.minimo=Math.max(0,parseFloat(document.getElementById('ep-minimo').value)||0);l.ativo=true;if(antes!==l.atual)addHistorico('entrada',unidadeAtiva,`Edição: ${p.nome} ${antes}→${l.atual}${p.medida} (mínimo: ${l.minimo}${p.medida})`,'#3b82f6');save();closeModal('modal-editar-produto');renderMobileEstoque();renderBebidas();renderMobileDashboard();showToast('success',`${p.nome} atualizado!`)}
+
+// === RECEITAS / PRODUÇÃO / PERDAS ===
+function normalizarReceita(r){return {...r,id:Number(r.id)||Date.now()+Math.floor(Math.random()*1000),nome:r.nome||'Nova receita',produtoFinalId:r.produtoFinalId==null?null:Number(r.produtoFinalId),baseKg:Number(r.baseKg)||1,gramasPorUn:Number(r.gramasPorUn)||0,rendimentoUn:Number(r.rendimentoUn)||0,perdaLimpezaPct:Number(r.perdaLimpezaPct)||0,ingredientes:Array.isArray(r.ingredientes)?r.ingredientes.map(i=>({produtoId:Number(i.produtoId),qtd:Number(i.qtd)||0,unidade:i.unidade||'un'})):[],ativo:r.ativo!==false}}
+function listarReceitas(){return (state.receitas||[]).map(normalizarReceita).filter(r=>r.ativo!==false)}
+function escalarReceita(receita,kgUsados){const fator=(Number(kgUsados)||0)/(Number(receita.baseKg)||1);return{ingredientes:receita.ingredientes.map(i=>({...i,qtd:+(Number(i.qtd)*fator).toFixed(3)})),unidadesEsperadas:+(Number(receita.rendimentoUn)*fator).toFixed(2),fator}}
+function salvarReceita(dados){const r=normalizarReceita(dados);const idx=state.receitas.findIndex(x=>Number(x.id)===Number(r.id));if(idx>=0)state.receitas[idx]=r;else state.receitas.push(r);save();renderReceitas();showToast('success','Receita salva!');return r}
+function excluirReceita(id){const r=state.receitas.find(x=>Number(x.id)===Number(id));if(!r)return;if(!confirm(`Excluir a receita "${r.nome}"?`))return;r.ativo=false;save();renderReceitas();showToast('success','Receita excluída.')}
+function abrirNovaReceita(){
+  receitaEditandoId=null;
+  const modal=document.getElementById('modal-receita');
+  if(!modal){showToast('error','Tela de receita não encontrada.');return;}
+  modal.classList.add('open');
+  try{abrirEditorReceita(null)}catch(e){console.error('Erro ao abrir ficha técnica:',e);showToast('error','Não foi possível carregar a ficha técnica.');}
+}
+function editarReceita(id){receitaEditandoId=id;abrirEditorReceita(state.receitas.find(r=>Number(r.id)===Number(id)))}
+function abrirEditorReceita(r){
+  const existing=r?normalizarReceita(r):{id:null,nome:'',produtoFinalId:null,baseKg:10,gramasPorUn:120,rendimentoUn:96,perdaLimpezaPct:0,ingredientes:[],ativo:true};
+  const modal=document.getElementById('modal-receita');
+  if(!modal)return;
+  modal.classList.add('open');
+  modal.querySelector('#rec-id').value=existing.id||'';
+  modal.querySelector('#rec-nome').value=existing.nome;
+  modal.querySelector('#rec-base').value=existing.baseKg;
+  modal.querySelector('#rec-gramas').value=existing.gramasPorUn;
+  modal.querySelector('#rec-rendimento').value=existing.rendimentoUn;
+  modal.querySelector('#rec-perda').value=existing.perdaLimpezaPct||0;
+  preencherSelectProdutosReceita(existing.produtoFinalId);
+  renderIngredientesEditor(existing.ingredientes);
+}
+function setupSearchPicker(rootId,inputId,menuId,items,getId,getLabel,placeholder,onSelect,emptyLabel='Nenhum item encontrado'){const root=document.getElementById(rootId),input=document.getElementById(inputId),menu=document.getElementById(menuId);if(!root||!input||!menu)return;root._pickerItems=items||[];root._pickerGetId=getId;root._pickerGetLabel=getLabel;root._pickerOnSelect=onSelect;input.placeholder=placeholder||'';const render=()=>{const q=(input.value||'').trim().toLowerCase();const filtered=root._pickerItems.filter(x=>String(getLabel(x)).toLowerCase().includes(q));menu.innerHTML=filtered.length?filtered.map(x=>`<div class="picker-option" data-id="${getId(x)}">${getLabel(x)}</div>`).join(''):`<div class="picker-empty">${emptyLabel}</div>`;menu.classList.add('open');};input.onfocus=render;input.oninput=render;menu.onclick=e=>{const opt=e.target.closest('.picker-option');if(!opt)return;const item=root._pickerItems.find(x=>String(getId(x))===String(opt.dataset.id));if(!item)return;document.getElementById(inputId).value=getLabel(item);document.getElementById(rootId).querySelector('input[type=hidden]').value=getId(item);menu.classList.remove('open');if(root._pickerOnSelect)root._pickerOnSelect(item);};input.onblur=()=>setTimeout(()=>menu.classList.remove('open'),160);root._pickerSet=(id)=>{const item=root._pickerItems.find(x=>String(getId(x))===String(id));input.value=item?getLabel(item):'';root.querySelector('input[type=hidden]').value=item?getId(item):''};root._pickerClear=()=>{input.value='';root.querySelector('input[type=hidden]').value=''};return root}
+function preencherSelectProdutosReceita(selectedId){const pf=document.getElementById('rec-pf-picker');if(!pf)return;setupSearchPicker('rec-pf-picker','rec-pf-search','rec-pf-menu',state.produtos.filter(p=>p.tipo==='pf'||p.tipo==='ambos'||!p.tipo),p=>p.id,p=>p.nome,'Pesquisar produto final...',()=>{});pf._pickerSet(selectedId ?? (document.getElementById('rec-pf').value || ''));}
+function renderIngredientesEditor(items=[]){const box=document.getElementById('ingredientes-editor');box.innerHTML='';items.forEach(i=>adicionarIngredienteLinha(i));if(!items.length)adicionarIngredienteLinha()}
+function adicionarIngredienteLinha(item={produtoId:'',qtd:'',unidade:'kg'}){const box=document.getElementById('ingredientes-editor'),row=document.createElement('div');row.className='ingredient-row';const uid='ing-'+Date.now()+'-'+Math.floor(Math.random()*100000);row.innerHTML=`<div class="search-picker ing-prod-picker" id="${uid}"><input class="picker-input ing-prod-search" id="${uid}-search" autocomplete="off" placeholder="Pesquisar produto MP..."><input type="hidden" class="ing-prod" value=""><div class="picker-menu ing-prod-menu" id="${uid}-menu"></div></div><input class="input-field ing-qtd" type="number" min="0" step="0.001" value="${item.qtd??''}"><select class="select-field ing-un"><option ${item.unidade==='kg'?'selected':''}>kg</option><option ${item.unidade==='g'?'selected':''}>g</option><option ${item.unidade==='un'?'selected':''}>un</option><option ${item.unidade==='L'?'selected':''}>L</option><option ${item.unidade==='ml'?'selected':''}>ml</option><option ${item.unidade==='cx'?'selected':''}>cx</option><option ${item.unidade==='pct'?'selected':''}>pct</option></select><button type="button" class="icon-remove" onclick="this.parentElement.remove()">×</button>`;box.appendChild(row);setupSearchPicker(uid,uid+'-search',uid+'-menu',state.produtos.filter(p=>p.tipo==='mp'||p.tipo==='ambos'||!p.tipo),p=>p.id,p=>p.nome,'Pesquisar produto MP...',()=>{});row.querySelector('.ing-prod').value=item.produtoId||'';const prod=state.produtos.find(p=>String(p.id)===String(item.produtoId));row.querySelector('.ing-prod-search').value=prod?prod.nome:'';}
+function salvarReceitaForm(){const nome=document.getElementById('rec-nome').value.trim();if(!nome){showToast('error','Informe o nome da receita.');return}const ingredientes=[...document.querySelectorAll('#ingredientes-editor .ingredient-row')].map(row=>({produtoId:Number(row.querySelector('.ing-prod').value),qtd:Number(row.querySelector('.ing-qtd').value),unidade:row.querySelector('.ing-un').value})).filter(i=>i.produtoId&&i.qtd>0);if(!ingredientes.length){showToast('error','Adicione pelo menos um ingrediente.');return}salvarReceita({id:Number(document.getElementById('rec-id').value)||Date.now(),nome,produtoFinalId:document.getElementById('rec-pf').value?Number(document.getElementById('rec-pf').value):null,baseKg:Number(document.getElementById('rec-base').value)||1,gramasPorUn:Number(document.getElementById('rec-gramas').value)||0,rendimentoUn:Number(document.getElementById('rec-rendimento').value)||0,perdaLimpezaPct:Number(document.getElementById('rec-perda').value)||0,ingredientes,ativo:true});closeModal('modal-receita')}
+function renderReceitas(){const box=document.getElementById('receitas-list');if(!box)return;const rs=listarReceitas();box.innerHTML=rs.length?rs.map(r=>{const chips=r.ingredientes.map(i=>{const p=state.produtos.find(x=>Number(x.id)===Number(i.produtoId));return `<span class="ingredient-chip">${p?.nome||'Produto'} · ${i.qtd}${i.unidade}</span>`}).join('');return `<article class="recipe-card"><div class="recipe-head"><div><div class="recipe-name">${r.nome}</div><div class="recipe-meta">Base ${r.baseKg} kg · rende ~${r.rendimentoUn} un · ${r.gramasPorUn}g/un</div></div><div class="recipe-actions"><button class="btn btn-primary" onclick="produzirReceita(${r.id})">Produzir</button><button class="btn" onclick="editarReceita(${r.id})">✎</button></div></div><div class="ingredient-chips">${chips||'<span class="ingredient-chip">Sem ingredientes</span>'}</div><div class="recipe-meta">Perda limpeza: ${r.perdaLimpezaPct||0}% <button class="btn danger-btn" style="float:right;min-height:36px;padding:0 9px" onclick="excluirReceita(${r.id})">Excluir</button></div></article>`}).join(''):'<div class="empty" style="padding:45px 10px;color:var(--muted);text-align:center">Nenhuma receita cadastrada.<br>Crie sua primeira ficha técnica.</div>'}
+function produzirReceita(id){receitaPreSelecionada=id;navigate('producao');setTimeout(()=>{const s=document.getElementById('producao-receita-picker');if(s&&s._pickerSet)s._pickerSet(String(id));renderProducaoMobile()},0)}
+function previewProducao(receitaId,kgUsados){const r=listarReceitas().find(x=>Number(x.id)===Number(receitaId));if(!r)return null;return escalarReceita(r,kgUsados)}
+function preencherReceitasProducao(){const picker=document.getElementById('producao-receita-picker');if(!picker)return;const rs=listarReceitas();setupSearchPicker('producao-receita-picker','producao-receita-search','producao-receita-menu',rs,r=>r.id,r=>r.nome,'Pesquisar receita...',()=>renderPreviewProducao(),'Cadastre uma receita primeiro');const selected=receitaPreSelecionada&&rs.some(r=>Number(r.id)===Number(receitaPreSelecionada))?receitaPreSelecionada:(document.getElementById('producao-receita').value||rs[0]?.id||'');picker._pickerSet(selected);receitaPreSelecionada=null}
+function renderPreviewProducao(){const s=document.getElementById('producao-receita'),kg=Number(document.getElementById('producao-kg')?.value)||0,box=document.getElementById('producao-preview');if(!s||!box)return;const r=listarReceitas().find(x=>Number(x.id)===Number(s.value));if(!r){box.innerHTML='<div class="preview-card">Cadastre uma receita para iniciar.</div>';return}const x=escalarReceita(r,kg);box.innerHTML=`<div class="preview-card"><div class="preview-title">🧮 Pré-visualização automática</div><div class="preview-line">Com base em <strong>${kg} kg</strong> de matéria-prima</div><div class="preview-line"><strong>Baixa:</strong> ${x.ingredientes.map(i=>{const p=state.produtos.find(p=>Number(p.id)===Number(i.produtoId));return `${i.qtd}${i.unidade} ${p?.nome||'produto'}`}).join(', ')}</div><div class="preview-line"><span>Rendimento esperado:</span><br><span class="yield-number">${x.unidadesEsperadas} unidades</span></div></div>`;const reais=document.getElementById('producao-reais');if(reais&&!reais.value)reais.value=Math.round(x.unidadesEsperadas);renderRendimentoProducao()}
+function renderRendimentoProducao(){const s=document.getElementById('producao-receita'),r=listarReceitas().find(x=>Number(x.id)===Number(s?.value)),reais=Number(document.getElementById('producao-reais')?.value)||0;const esperado=r?escalarReceita(r,Number(document.getElementById('producao-kg')?.value)||0).unidadesEsperadas:0;document.getElementById('producao-rendimento').textContent=`Rendimento: ${esperado?((reais/esperado)*100).toFixed(0):0}%`}
+function alterarUnidadesProducao(delta){const i=document.getElementById('producao-reais');i.value=Math.max(0,(Number(i.value)||0)+delta);renderRendimentoProducao()}
+function renderProducaoMobile(){const aviso=document.getElementById('producao-aviso');if(aviso)aviso.innerHTML=unidadeAtiva!=='principal'?'<div class="notice">ℹ️ Produção baixa estoque da <strong>Loja Principal</strong>, independentemente da unidade selecionada.</div>':'';preencherReceitasProducao();renderPreviewProducao()}
+async function confirmarProducao(receitaId,kgUsados,unidadesReais){const r=listarReceitas().find(x=>Number(x.id)===Number(receitaId));if(!r){showToast('error','Selecione uma receita.');return false}if(!(kgUsados>0)||!(unidadesReais>=0)){showToast('error','Informe quantidades válidas.');return false}const x=escalarReceita(r,kgUsados),principal='principal';for(const i of x.ingredientes){const p=state.produtos.find(p=>Number(p.id)===Number(i.produtoId));if(!p){showToast('error','Ingrediente não encontrado.');return false}const l=lojaProduto(p,principal);if(Number(l.atual)<Number(i.qtd)){showToast('error',`Estoque insuficiente: ${p.nome}. Disponível ${l.atual}${p.medida||''}, necessário ${i.qtd}${i.unidade}.`);return false}}
+  const baixas=[];for(const i of x.ingredientes){const p=state.produtos.find(p=>Number(p.id)===Number(i.produtoId)),l=lojaProduto(p,principal);l.atual=+(l.atual-i.qtd).toFixed(3);l.ativo=true;baixas.push({produtoId:p.id,nome:p.nome,qtd:i.qtd,unidade:i.unidade})}
+  if(r.produtoFinalId!=null){const pf=state.produtos.find(p=>Number(p.id)===Number(r.produtoFinalId));if(pf){const l=lojaProduto(pf,principal);l.atual=+(l.atual+Number(unidadesReais)).toFixed(3);l.ativo=true}else{showToast('error','Produto final não encontrado.');return false}}
+  const esperado=x.unidadesEsperadas,rendimento=esperado?Number(((unidadesReais/esperado)*100).toFixed(2)):0;const registro={id:Date.now(),receitaId:r.id,receitaNome:r.nome,data:new Date().toISOString(),loja:principal,kgUsados:Number(kgUsados),unidadesEsperadas:esperado,unidadesReais:Number(unidadesReais),rendimentoPct:rendimento,baixas,ts:Date.now()};state.producao.unshift(registro);addHistorico('producao',principal,`Produção: ${r.nome} — ${kgUsados}kg → ${unidadesReais} un (${rendimento}%)`,'#e8432d');await save();renderProducaoMobile();renderMobileEstoque();renderBebidas();renderMobileDashboard();showToast('success',`Produção confirmada: ${unidadesReais} un de ${r.nome}.`);return true}
+function confirmarProducaoAtual(){const s=document.getElementById('producao-receita'),kg=Number(document.getElementById('producao-kg').value)||0,reais=Number(document.getElementById('producao-reais').value)||0;confirmarProducao(s.value,kg,reais)}
+function selecionarMotivoPerda(m){motivoPerdaAtivo=m;document.querySelectorAll('.reason-btn').forEach(b=>b.classList.toggle('active',b.dataset.motivo===m))}
+function preencherProdutosPerda(){const picker=document.getElementById('perda-produto-picker');if(!picker)return;const ps=produtosUnidade();const old=document.getElementById('perda-produto').value;setupSearchPicker('perda-produto-picker','perda-produto-search','perda-produto-menu',ps,p=>p.id,p=>p.nome,'Pesquisar produto...',()=>{});picker._pickerSet(old||ps[0]?.id||'')}
+function registrarPerda({produtoId,qtd,unidade,motivo,obs}){const p=state.produtos.find(x=>Number(x.id)===Number(produtoId));if(!p){showToast('error','Produto inválido.');return false}const l=lojaProduto(p,unidadeAtiva);if(qtd<=0){showToast('error','Informe uma quantidade válida.');return false}if(l.atual<qtd){showToast('error',`Estoque insuficiente de ${p.nome}. Disponível: ${l.atual}${p.medida}.`);return false}l.atual=+(l.atual-qtd).toFixed(3);l.ativo=true;const rec={id:Date.now(),produtoId:p.id,nome:p.nome,qtd:Number(qtd),unidade, motivo,obs:obs||'',data:new Date().toISOString(),loja:unidadeAtiva,ts:Date.now()};state.perdas.unshift(rec);addHistorico('perda',unidadeAtiva,`Perda: ${p.nome} — ${qtd}${unidade} (${motivo})${obs?' — '+obs:''}`,'#ef4444');save();renderPerdas();renderMobileEstoque();renderBebidas();renderMobileDashboard();showToast('success',`Perda registrada: ${p.nome}`);return true}
+function registrarPerdaAtual(){registrarPerda({produtoId:Number(document.getElementById('perda-produto').value),qtd:Number(document.getElementById('perda-qtd').value)||0,unidade:document.getElementById('perda-unidade').value,motivo:motivoPerdaAtivo,obs:document.getElementById('perda-obs').value.trim()});document.getElementById('perda-qtd').value='';document.getElementById('perda-obs').value=''}
+function listarPerdasDoDia(){const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return(state.perdas||[]).filter(x=>{const dt=new Date(x.data);return dt.getFullYear()===y&&dt.getMonth()+1===Number(m)&&dt.getDate()===Number(day)&&x.loja===unidadeAtiva})}
+function renderPerdas(){preencherProdutosPerda();const hoje=listarPerdasDoDia(),box=document.getElementById('perdas-hoje-list'),data=document.getElementById('perdas-data-hoje');if(data)data.textContent=new Date().toLocaleDateString('pt-BR');if(!box)return;box.innerHTML=hoje.length?hoje.map(x=>`<article class="loss-card"><div class="loss-head"><div><div class="loss-name">${x.nome}</div><div class="loss-meta">${x.qtd} ${x.unidade} · ${x.motivo}${x.obs?' · '+x.obs:''}</div></div><div class="today-time">${new Date(x.data).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div></div></article>`).join(''):'<div class="loss-empty">Nenhuma perda registrada hoje nesta unidade.</div>'}
+
+// === CADASTRO RÁPIDO DE PRODUTO ===
+let tipoNovoProduto='ambos';
+function abrirCadastrarProduto(){
+  ['np-nome','np-atual','np-minimo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=id==='np-nome'?'':id==='np-atual'?'0':'0'});
+  document.getElementById('np-categoria').value='outros';
+  document.getElementById('np-medida').value='un';
+  selecionarTipoNovo('ambos');
+  openModal('modal-cadastrar-produto');
+}
+function selecionarTipoNovo(tipo){
+  tipoNovoProduto=tipo;
+  const hidden=document.getElementById('np-tipo'); if(hidden)hidden.value=tipo;
+  document.querySelectorAll('#modal-cadastrar-produto .type-choice').forEach(b=>b.classList.toggle('active',b.dataset.tipo===tipo));
+}
+async function salvarNovoProduto(){
+  const nomeEl=document.getElementById('np-nome');
+  const categoriaEl=document.getElementById('np-categoria');
+  const medidaEl=document.getElementById('np-medida');
+  const iconeEl=document.getElementById('np-icone');
+  const atualEl=document.getElementById('np-atual');
+  const minimoEl=document.getElementById('np-minimo');
+
+  const nome=(nomeEl?.value||'').trim();
+  if(!nome){
+    showToast('error','Informe o nome do produto.');
+    nomeEl?.focus();
+    return;
+  }
+
+  const categoria=categoriaEl?.value||'outros';
+  const medida=medidaEl?.value||'un';
+  const atual=Math.max(0,parseFloat(atualEl?.value)||0);
+  const minimo=Math.max(0,parseFloat(minimoEl?.value)||0);
+  const icone=(iconeEl?.value||'').trim();
+
+  // Se o produto já veio do Supabase, não cria duplicado.
+  // Reutiliza o cadastro existente e configura a loja atualmente selecionada.
+  const existente=state.produtos.find(p=>String(p.nome||'').trim().toLowerCase()===nome.toLowerCase());
+  if(existente){
+    EuviPersistence.normalizarProduto(existente);
+    existente.categoria=categoria;
+    existente.medida=medida;
+    existente.tipo=tipoNovoProduto;
+    if(icone)existente.icone=icone;
+    if(!existente.lojas)existente.lojas=Object.fromEntries(unidadesConfig().map(u=>[u.id,EuviPersistence.lojaDefault(false)]));
+    if(!existente.lojas[unidadeAtiva])existente.lojas[unidadeAtiva]=EuviPersistence.lojaDefault(false);
+    existente.lojas[unidadeAtiva]={ativo:true,atual,minimo};
+    addHistorico('entrada',unidadeAtiva,`Produto já cadastrado: ${nome} — cadastro atualizado`,'#3b82f6');
+    await save();
+    closeModal('modal-cadastrar-produto');
+    renderMobileEstoque();
+    renderMobileDashboard();
+    showToast('success',`${nome} já existia e foi atualizado nesta unidade.`);
+    return;
+  }
+
+  const id=state.produtos.reduce((m,p)=>Math.max(m,Number(p.id)||0),0)+1;
+  const novo={
+    id,nome,categoria,medida,tipo:tipoNovoProduto,icone,
+    lojas:Object.fromEntries(unidadesConfig().map(u=>[u.id,EuviPersistence.lojaDefault(false)]))
+  };
+  novo.lojas[unidadeAtiva]={ativo:true,atual,minimo};
+  state.produtos.push(novo);
+  addHistorico('entrada',unidadeAtiva,`Produto cadastrado: ${nome}`,'#3b82f6');
+  await save();
+  closeModal('modal-cadastrar-produto');
+  renderMobileEstoque();
+  renderMobileDashboard();
+  showToast('success',`${nome} cadastrado!`);
+}
+
+// === ESTOQUE: ENTRADA / GERAR LISTA ===
+function nomeUnidadeAtiva(){return nomeDaUnidade(unidadeAtiva)}
+function criarLinhaEntradaMobile(item={}){
+  const box=document.getElementById('entrada-itens-mobile');
+  const row=document.createElement('div');
+  row.className='entrada-item-row';
+  row.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) 82px 88px 44px;gap:6px;align-items:end;margin-bottom:8px';
+  const uid='entrada-item-'+Date.now()+'-'+Math.floor(Math.random()*100000);
+  row.innerHTML=`<div class="search-picker" id="${uid}"><input class="picker-input entrada-item-search" autocomplete="off" placeholder="Pesquisar produto..."><input type="hidden" class="entrada-item-produto"><div class="picker-menu"></div></div><input class="input-field entrada-item-qtd" type="number" min="0" step="0.1" placeholder="Qtd" value="${item.qtd??''}"><select class="select-field entrada-item-unidade"><option>kg</option><option>un</option><option>cx</option><option>pct</option><option>fardo</option><option>L</option><option>g</option><option>ml</option></select><button type="button" class="icon-remove entrada-remove" style="min-height:48px" title="Remover">×</button>`;
+  box.appendChild(row);
+  const picker=setupSearchPicker(uid,`${uid}-search`,`${uid}-menu`,produtosUnidade(),x=>x.id,x=>x.nome,'Pesquisar produto...',()=>{});
+  if(item.produtoId) picker._pickerSet(item.produtoId);
+  if(item.unidade) row.querySelector('.entrada-item-unidade').value=item.unidade;
+  row.querySelector('.entrada-remove').onclick=()=>{
+    const rows=box.querySelectorAll('.entrada-item-row');
+    if(rows.length===1){picker._pickerClear();row.querySelector('.entrada-item-qtd').value='';return}
+    row.remove();
+  };
+  return row;
+}
+function adicionarItemEntradaMobile(){criarLinhaEntradaMobile();setTimeout(()=>{const rows=document.querySelectorAll('#entrada-itens-mobile .entrada-item-row');rows[rows.length-1]?.querySelector('.entrada-item-search')?.focus()},40)}
+function abrirEntradaMobile(){
+  document.getElementById('entrada-mobile-unidade').textContent=nomeUnidadeAtiva();
+  const box=document.getElementById('entrada-itens-mobile');
+  box.innerHTML='';
+  criarLinhaEntradaMobile();
+  document.getElementById('entrada-fornecedor-mobile').value='';
+  document.getElementById('entrada-obs-mobile').value='';
+  openModal('modal-entrada-mobile');
+}
+async function confirmarEntradaMobile(){
+  const rows=[...document.querySelectorAll('#entrada-itens-mobile .entrada-item-row')];
+  const forn=document.getElementById('entrada-fornecedor-mobile').value.trim();
+  const obs=document.getElementById('entrada-obs-mobile').value.trim();
+  const itens=rows.map(row=>({
+    pid:Number(row.querySelector('.entrada-item-produto').value),
+    qtd:Number(row.querySelector('.entrada-item-qtd').value)||0,
+    unidade:row.querySelector('.entrada-item-unidade').value
+  })).filter(x=>x.pid||x.qtd);
+  if(!itens.length){showToast('error','Adicione pelo menos um produto recebido.');return}
+  for(const item of itens){
+    if(!item.pid){showToast('error','Selecione o produto de todos os itens.');return}
+    if(item.qtd<=0){showToast('error','Informe uma quantidade válida para todos os itens.');return}
+    if(!state.produtos.some(x=>Number(x.id)===item.pid)){showToast('error','Produto não encontrado.');return}
+  }
+  for(const item of itens){
+    const p=state.produtos.find(x=>Number(x.id)===item.pid);
+    const l=lojaProduto(p);
+    const antes=Number(l.atual)||0;
+    l.atual=+(antes+item.qtd).toFixed(3);
+    l.ativo=true;
+    addHistorico('entrada',unidadeAtiva,`Entrada: ${p.nome} +${item.qtd}${item.unidade}${forn?' ('+forn+')':''}${obs?' — '+obs:''}`,'#22c55e');
+  }
+  await save();
+  const nomes=itens.map(i=>state.produtos.find(p=>Number(p.id)===i.pid)?.nome).filter(Boolean);
+  closeModal('modal-entrada-mobile');
+  renderMobileEstoque();renderBebidas();renderMobileDashboard();
+  showToast('success',`${itens.length} ${itens.length===1?'item adicionado':'itens adicionados'} ao estoque.`);
+}
+const ORDEM_CATEGORIAS_LISTA=['carnes','frios','verduras','mercado','embalagem','bebidas','outros'];
+const META_CATEGORIA_LISTA={
+  carnes:{nome:'Carnes',emoji:'🥩'},
+  frios:{nome:'Frios',emoji:'🧀'},
+  verduras:{nome:'Verduras',emoji:'🥬'},
+  mercado:{nome:'Mercado',emoji:'🛒'},
+  embalagem:{nome:'Embalagem',emoji:'📦'},
+  bebidas:{nome:'Bebidas',emoji:'🥤'},
+  outros:{nome:'Outros',emoji:'📌'}
+};
+function chaveCategoriaLista(p){
+  const c=String(p.categoria||'outros').toLowerCase().trim();
+  return META_CATEGORIA_LISTA[c]?c:'outros';
+}
+function gruposListaCompras(itens){
+  const grupos={};
+  itens.forEach(p=>{const c=chaveCategoriaLista(p);(grupos[c]??=[]).push(p)});
+  return ORDEM_CATEGORIAS_LISTA.filter(c=>grupos[c]?.length).map(c=>({categoria:c,itens:grupos[c].sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'))}));
+}
+function quantidadePedirLista(p){
+  const l=lojaProduto(p);
+  return Math.max(0,Number(l.minimo)-Number(l.atual));
+}
+function textoQuantidadeLista(v){
+  const n=Number(v);
+  return Number.isInteger(n)?String(n):String(Number(n.toFixed(3))).replace('.',',');
+}
+function abrirListaMobile(){
+  document.getElementById('lista-mobile-unidade').textContent=nomeUnidadeAtiva();
+  const itens=produtosUnidade().filter(p=>{const l=lojaProduto(p);return Number(l.atual)<Number(l.minimo)});
+  const box=document.getElementById('lista-mobile-itens'),vazia=document.getElementById('lista-mobile-vazia');
+  const grupos=gruposListaCompras(itens);
+  box.innerHTML=grupos.map(g=>{
+    const meta=META_CATEGORIA_LISTA[g.categoria];
+    return `<div class="list-category-title"><span>${meta.emoji}</span><span>${meta.nome}</span><span class="list-category-count">${g.itens.length} ${g.itens.length===1?'item':'itens'}</span></div>`+
+      g.itens.map(p=>{const l=lojaProduto(p),pedir=quantidadePedirLista(p);return `<label class="list-check"><input type="checkbox" checked data-lista-id="${p.id}"><div class="list-check-main"><div class="list-check-name">${escapeHTML(p.nome)}</div><div class="list-check-meta">Tem ${textoQuantidadeLista(l.atual)}${p.medida} · pedir ${textoQuantidadeLista(pedir)}${p.medida}</div></div></label>`}).join('');
+  }).join('');
+  box.dataset.empty=itens.length?'0':'1';
+  vazia.style.display=itens.length?'none':'block';
+  openModal('modal-lista-mobile');
+}
+function dataListaWhatsApp(){
+  const d=new Date();
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+function enviarListaWhatsAppMobile(){
+  const ids=[...document.querySelectorAll('#lista-mobile-itens input[data-lista-id]:checked')].map(x=>Number(x.dataset.listaId));
+  const selecionados=state.produtos.filter(p=>ids.includes(Number(p.id)));
+  if(!selecionados.length){showToast('error','Selecione pelo menos um item.');return}
+  const grupos=gruposListaCompras(selecionados);
+  const linhas=[`*📋 Lista ${nomeUnidadeAtiva()} — ${dataListaWhatsApp()}*`,''];
+  grupos.forEach(g=>{
+    const meta=META_CATEGORIA_LISTA[g.categoria];
+    linhas.push(`*${meta.emoji} ${meta.nome}*`);
+    g.itens.forEach(p=>{
+      const l=lojaProduto(p),pedir=quantidadePedirLista(p);
+      linhas.push(`• ${p.nome} — tem ${textoQuantidadeLista(l.atual)}${p.medida}, pedir ${textoQuantidadeLista(pedir)}${p.medida}`);
+    });
+    linhas.push('');
+  });
+  linhas.push('_👀 Euvi Gestão_');
+  const txt=linhas.join('\n');
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+
+function navigate(view){['dashboard','estoque','bebidas','producao','receitas','perdas','config'].forEach(v=>{const el=document.getElementById('view-'+v);if(el)el.classList.toggle('active',v===view)});document.querySelectorAll('.bottom-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===view));if(view==='dashboard')renderMobileDashboard();if(view==='estoque')renderMobileEstoque();if(view==='bebidas')renderBebidas();if(view==='receitas')renderReceitas();if(view==='producao')renderProducaoMobile();if(view==='perdas')renderPerdas();if(view==='config'){aplicarConfiguracaoApp();renderConfiguracoes()}}
+
+async function initMobile(){
+  try{state=await EuviPersistence.carregar({produtos:produtosIniciais,listas:{manoel:[],brilhante:[]},producao:[],perdas:[],receitas:[],config:{appName:'Euvi Gestão',stores:[{id:'principal',nome:'Loja Principal',tipo:'geral',ativo:true},{id:'manoel',nome:'Manoel',tipo:'geral',ativo:true},{id:'brilhante',nome:'Brilhante',tipo:'geral',ativo:true}]},contagens:contagensIniciais,historico:historicoInicial,filtroEstoque:'todos',searchEstoque:'',lojaFiltro:'principal'},'admin');window.EUVI_STATE=state}catch(e){console.error(e);resetState();state.receitas=state.receitas||[];state.perdas=state.perdas||[];showToast('error','Não foi possível sincronizar com o Supabase. Alterações podem não ser salvas até a conexão voltar.')}
+  unidadeAtiva=unidadeStore(state.lojaFiltro||'principal');window.unidadeAtiva=unidadeAtiva;
+  renderSeletorUnidades();aplicarConfiguracaoApp();renderConfiguracoes();renderMobileDashboard();renderMobileEstoque();renderBebidas();renderReceitas();renderProducaoMobile();renderPerdas();
+}
+initMobile();
+</script>
+</body>
+</html>
