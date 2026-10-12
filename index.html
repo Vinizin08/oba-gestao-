@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Euvi Gestão — Controle de Estoque</title>
 <style>
   :root{--bg:#0d0d0d;--surface:#1a1a1a;--surface2:#202020;--card:#171717;--border:#2e2e2e;--accent:#e8432d;--accent2:#ff6b4a;--gold:#f5a623;--green:#22c55e;--text:#f2f2f2;--muted:#969696;--subtle:#555;--radius:16px;--font:Inter,Arial,sans-serif;--mono:JetBrains Mono,monospace}
@@ -69,7 +69,44 @@
   .stock-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0 14px}.stock-action-btn{min-height:48px;border-radius:12px;border:1px solid var(--border);background:#1a1a1a;color:#fff;font-size:14px;font-weight:750}.stock-action-btn.primary{background:var(--accent);border-color:var(--accent)}.stock-action-btn.green{background:#22c55e;border-color:#22c55e;color:#08120a}.list-check{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #2a2a2a}.list-check input{width:20px;height:20px;accent-color:var(--accent)}.list-check-main{flex:1}.list-check-name{font-weight:700}.list-category-title{font-size:13px;font-weight:800;color:#fff;padding:14px 0 7px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #333;margin-top:4px}.list-category-title:first-child{margin-top:0}.list-category-count{font-size:11px;color:var(--muted);font-weight:600}.list-check-meta{font-size:12px;color:var(--muted);margin-top:3px}.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}  .search-picker{position:relative}.search-picker .picker-input{width:100%;height:48px;background:#151515;border:1px solid var(--border);border-radius:12px;color:#fff;padding:0 13px;outline:0}.search-picker .picker-input:focus{border-color:var(--accent)}.picker-menu{position:absolute;left:0;right:0;top:54px;max-height:260px;overflow:auto;background:#202020;border:1px solid var(--border);border-radius:12px;z-index:500;box-shadow:0 12px 30px rgba(0,0,0,.45);display:none}.picker-menu.open{display:block}.picker-option{min-height:48px;display:flex;align-items:center;padding:10px 13px;border-bottom:1px solid #2a2a2a;color:#fff;cursor:pointer}.picker-option:last-child{border-bottom:0}.picker-option:active,.picker-option:hover{background:#2a2a2a}.picker-empty{padding:14px;color:var(--muted);font-size:13px}.ingredient-row .search-picker .picker-input{height:44px;padding:0 9px}  .form-section-title{font-size:14px;font-weight:750;margin:18px 0 10px}.ingredient-row{display:grid;grid-template-columns:1.5fr .7fr .7fr 44px;gap:7px;margin-bottom:8px;align-items:center}.ingredient-row .input-field,.ingredient-row .select-field{height:44px;padding:0 9px}.icon-remove{width:44px;height:44px;border:1px solid #542525;background:#261515;color:#ff6b5a;border-radius:10px;font-size:20px}
   .preview-card{background:#141414;border:1px dashed #555;border-radius:16px;padding:15px;margin:14px 0}.preview-title{color:#ff6b3d;font-weight:750;margin-bottom:8px}.preview-line{padding:9px 0;border-bottom:1px solid #2a2a2a;font-size:13px}.preview-line:last-child{border-bottom:0}.yield-number{color:var(--green);font-size:21px;font-weight:800}.notice{background:#241d18;border:1px solid #5a3825;color:#f5c6a6;padding:11px 13px;border-radius:12px;font-size:12px;margin-bottom:12px}.danger-btn{background:#2a1717!important;border-color:#633030!important;color:#ff8275!important}.loss-today{margin-top:18px}.loss-empty{padding:25px 8px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:14px}.reason-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.reason-btn{min-height:62px;border:1px solid var(--border);background:#171717;color:#ccc;border-radius:12px;font-size:11px}.reason-btn.active{border-color:var(--accent);background:#2a1917;color:#fff}.reason-btn span{display:block;font-size:20px;margin-bottom:3px}.today-time{font-family:var(--mono);color:var(--muted);font-size:12px}
   @media(max-width:520px){.ingredient-row{grid-template-columns:1.25fr .7fr .65fr 44px}.reason-row{grid-template-columns:repeat(3,1fr)}}
+
+/* Ajustes mobile-first: painel administrativo compacto */
+@media (max-width: 600px) {
+  html, body { width:100%; min-width:0; overflow-x:hidden; font-size:14px; }
+  body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .topbar { height:58px; padding:8px 12px; gap:8px; }
+  .topbar-title { font-size:16px; max-width:42vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .topbar-actions { gap:6px; }
+  .loja-chip { max-width:52vw; padding:6px 8px; }
+  .loja-chip select { max-width:35vw; font-size:12px; }
+  .topbar-settings { width:34px; height:34px; flex:0 0 34px; }
+  .content { width:100%; max-width:100%; padding:70px 12px 20px; margin:0; }
+  .page-title { font-size:21px; line-height:1.2; margin:4px 0 14px; }
+  .page-subtitle { font-size:12px; }
+  .cards-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .stat-card { min-width:0; padding:12px; border-radius:13px; }
+  .stat-card-label { font-size:11px; }
+  .stat-card-value { font-size:25px; }
+  .stat-card-sub { font-size:10px; }
+  .panel, .section-card, .product-card, .stock-card, .form-card { min-width:0; max-width:100%; }
+  .bottom-nav { height:calc(64px + env(safe-area-inset-bottom)); grid-template-columns:repeat(6,minmax(0,1fr)); padding:5px 3px env(safe-area-inset-bottom); }
+  .bottom-btn { font-size:9px; gap:3px; overflow:hidden; }
+  .bottom-btn .bn-icon { font-size:19px; }
+  button, input, select { max-width:100%; }
+  input, select { min-height:40px; }
+  .content table { display:block; max-width:100%; overflow-x:auto; }
+  .modal, .modal-card, .config-card { width:100%; max-width:100%; }
+}
+@media (max-width: 380px) {
+  .content { padding-left:9px; padding-right:9px; }
+  .topbar-title { max-width:35vw; font-size:14px; }
+  .bottom-btn { font-size:8px; }
+  .bottom-btn .bn-icon { font-size:18px; }
+  .stat-card { padding:10px; }
+}
+
 </style>
+<link rel="manifest" href="./manifest.json"><meta name="theme-color" content="#0d0d0d"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <div class="app">
@@ -1513,5 +1550,6 @@ async function initMobile(){
 }
 initMobile();
 </script>
+<script>if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('PWA indisponível',err));</script>
 </body>
 </html>
