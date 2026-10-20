@@ -90,6 +90,7 @@
 .custom-select-option.selected{background:#30201d;color:#ff8a70}
 .custom-select-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;left:-10000px!important}
 
+@media (max-width:520px){.stock-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}.stock-action-btn{font-size:13px}}
 </style>
 </head>
 <body>
@@ -99,7 +100,7 @@
       <div class="topbar-title">Euvi Gestão</div>
       <div class="topbar-actions">
         <button type="button" class="settings-shortcut" aria-label="Configurações" title="Configurações" onclick="abrirConfiguracoes()">⚙</button>
-        <label class="loja-chip"><span>🏪</span><select id="unidade-select" onchange="trocarUnidade(this.value)"><option value="principal" selected>Loja Principal</option><option value="manoel">Manoel</option><option value="brilhante">Brilhante</option></select><span>⌄</span></label>
+        <label class="loja-chip"><span>🏪</span><select id="unidade-select" onchange="trocarUnidade(this.value)"><option value="principal" selected>Job's Depósito</option><option value="manoel">Job's Lanches</option><option value="brilhante">Job's Bilhar</option></select><span>⌄</span></label>
       </div>
     </header>
     <div class="content">
@@ -127,8 +128,9 @@
         <div class="category-row" id="mobile-beverage-categories" style="display:none">
           <button class="tab active" onclick="filterBebidas('todos',this)">Todas</button><button class="tab" onclick="filterBebidas('sucos',this)">🧃 Sucos</button><button class="tab" onclick="filterBebidas('cervejas',this)">🍺 Cervejas</button><button class="tab" onclick="filterBebidas('refrigerantes',this)">🥤 Refrigerantes</button>
         </div>
-        <div class="stock-actions" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="stock-actions" style="grid-template-columns:repeat(4,minmax(0,1fr))">
           <button class="stock-action-btn primary" onclick="abrirEntradaMobile()">＋ Entrada</button>
+          <button class="stock-action-btn" style="border-color:#633030;color:#ff8275" onclick="abrirSaidaMobile()">− Saída</button>
           <button class="stock-action-btn green" onclick="abrirListaMobile()">☑ Gerar lista</button>
           <button class="stock-action-btn" onclick="abrirCadastrarProduto()">＋ Produto</button>
         </div>
@@ -177,7 +179,7 @@
   <button class="bottom-btn" data-view="perdas" onclick="navigate('perdas')"><span class="bn-icon">▥</span><span>Perdas</span></button>
 </nav>
 
-<div class="modal-overlay" id="modal-configuracoes"><div class="modal"><div class="modal-header"><div><div class="modal-title">Configurações</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Preferências básicas do Euvi Gestão</div></div><button class="modal-close" onclick="closeModal('modal-configuracoes')">×</button></div><div class="modal-body"><div class="form-row"><label class="input-label" for="cfg-nome-app">Nome do aplicativo</label><input class="input-field" id="cfg-nome-app" maxlength="50" value="Euvi Gestão"></div><div class="form-section-title">Nomes das lojas</div><div class="settings-grid"><div class="form-row"><label class="input-label" for="cfg-loja-principal">Loja principal</label><input class="input-field" id="cfg-loja-principal" maxlength="40" value="Loja Principal"></div><div class="form-row"><label class="input-label" for="cfg-loja-manoel">Loja Manoel</label><input class="input-field" id="cfg-loja-manoel" maxlength="40" value="Manoel"></div><div class="form-row"><label class="input-label" for="cfg-loja-brilhante">Loja Brilhante</label><input class="input-field" id="cfg-loja-brilhante" maxlength="40" value="Brilhante"></div></div><p class="settings-help">Esta versão mantém as três unidades já existentes. A inclusão de uma nova unidade exige ampliar o modelo de estoque e será feita separadamente, após aprovação.</p></div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-configuracoes')">Cancelar</button><button class="btn btn-primary" onclick="salvarConfiguracoes()">Salvar configurações</button></div></div></div>
+<div class="modal-overlay" id="modal-configuracoes"><div class="modal"><div class="modal-header"><div><div class="modal-title">Configurações</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Preferências básicas do Euvi Gestão</div></div><button class="modal-close" onclick="closeModal('modal-configuracoes')">×</button></div><div class="modal-body"><div class="form-section-title">Nomes das lojas</div><div class="settings-grid"><div class="form-row"><label class="input-label" for="cfg-loja-principal">Job's Depósito</label><input class="input-field" id="cfg-loja-principal" maxlength="40" value="Job's Depósito"></div><div class="form-row"><label class="input-label" for="cfg-loja-manoel">Job's Lanches</label><input class="input-field" id="cfg-loja-manoel" maxlength="40" value="Job's Lanches"></div><div class="form-row"><label class="input-label" for="cfg-loja-brilhante">Job's Bilhar</label><input class="input-field" id="cfg-loja-brilhante" maxlength="40" value="Job's Bilhar"></div></div><p class="settings-help">Esta versão mantém as três unidades já existentes. A inclusão de uma nova unidade exige ampliar o modelo de estoque e será feita separadamente, após aprovação.</p></div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-configuracoes')">Cancelar</button><button class="btn btn-primary" onclick="salvarConfiguracoes()">Salvar configurações</button></div></div></div>
 
 <div class="modal-overlay" id="modal-editar-produto"><div class="modal"><div class="modal-header"><div class="modal-title">Editar produto</div><button class="modal-close" onclick="closeModal('modal-editar-produto')">×</button></div><div class="modal-body">
 <input type="hidden" id="ep-id"><div class="form-row"><label class="input-label">Nome</label><input class="input-field" id="ep-nome"></div>
@@ -200,6 +202,7 @@
 <div class="form-row"><label class="input-label">Observação <span style="color:var(--muted)">(opcional)</span></label><textarea class="input-field" id="entrada-obs-mobile" maxlength="100" style="height:76px;padding-top:12px;resize:none"></textarea></div>
 </div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-entrada-mobile')">Cancelar</button><button class="btn btn-green" onclick="confirmarEntradaMobile()">Adicionar entrada</button></div></div></div>
 <div class="modal-overlay" id="modal-lista-mobile"><div class="modal"><div class="modal-header"><div><div class="modal-title">Gerar lista de compras</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Itens abaixo do mínimo · <span id="lista-mobile-unidade">Loja Principal</span></div></div><button class="modal-close" onclick="closeModal('modal-lista-mobile')">×</button></div><div class="modal-body"><div id="lista-mobile-itens"></div><div id="lista-mobile-vazia" class="empty" style="display:none;padding:20px 5px;text-align:center;color:var(--green)">✓ Nenhum item abaixo do mínimo.</div></div><div class="modal-footer sheet-actions"><button class="btn" onclick="closeModal('modal-lista-mobile')">Fechar</button><button class="btn btn-green" onclick="enviarListaWhatsAppMobile()">WhatsApp</button></div></div></div>
+<div class="modal-overlay" id="modal-saida-mobile"><div class="modal"><div class="modal-header"><div><div class="modal-title">Registrar saída / venda</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Unidade: <strong id="saida-mobile-unidade">Job's Depósito</strong></div></div><button class="modal-close" onclick="closeModal('modal-saida-mobile')">×</button></div><div class="modal-body"><div class="form-row"><label class="input-label" for="saida-produto">Produto</label><select class="select-field" id="saida-produto"></select></div><div class="form-row"><label class="input-label" for="saida-qtd">Quantidade vendida</label><input class="input-field" id="saida-qtd" type="number" min="0.001" step="0.001" placeholder="Informe a quantidade"></div><div class="form-row"><label class="input-label" for="saida-obs">Observação (opcional)</label><input class="input-field" id="saida-obs" maxlength="120" placeholder="Ex.: venda balcão"></div></div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-saida-mobile')">Cancelar</button><button class="btn btn-primary" onclick="confirmarSaidaMobile()">Registrar saída</button></div></div></div>
 <div class="modal-overlay" id="modal-cadastrar-produto"><div class="modal"><div class="modal-header"><div class="modal-title">Cadastrar produto</div><button class="modal-close" onclick="closeModal('modal-cadastrar-produto')">×</button></div><div class="modal-body">
 <div class="form-row"><label class="input-label">Nome</label><input class="input-field" id="np-nome" placeholder="Ex.: Salsicha"></div>
 <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="input-label">Categoria</label><select class="select-field" id="np-categoria" onchange="alternarSubcategoriaBebida('np')"><option value="carnes">Carnes</option><option value="frios">Frios</option><option value="verduras">Verduras</option><option value="mercado">Mercado</option><option value="embalagem">Embalagem</option><option value="bebidas">Bebidas</option><option value="outros" selected>Outros</option></select></div><div><label class="input-label">Medida</label><select class="select-field" id="np-medida"><option value="un" selected>unidade (un)</option><option value="kg">quilograma (kg)</option><option value="g">grama (g)</option><option value="mg">miligrama (mg)</option><option value="L">litro (L)</option><option value="ml">mililitro (ml)</option><option value="cx">caixa (cx)</option><option value="fardo">fardo</option><option value="pct">pacote (pct)</option><option value="pacote">pacote</option><option value="dz">dúzia (dz)</option><option value="garrafa">garrafa</option><option value="lata">lata</option></select></div></div>
@@ -280,6 +283,8 @@
       medida: p.medida || p.unidadeMedida || 'un',
       tipo: p.tipo || 'ambos',
       icone: p.icone || '',
+      subcategoria: p.subcategoria || '',
+      observacao: p.observacao || '',
       lojas
     };
   }
@@ -1201,7 +1206,7 @@ function showToast(type, msg) {
 // ==================== FASE 1 + FASES 2/3 — APP MOBILE ====================
 let unidadeAtiva = 'principal';
 window.unidadeAtiva = unidadeAtiva;
-const unidadeLabels = { principal:'Loja Principal', manoel:'Manoel', brilhante:'Brilhante' };
+const unidadeLabels = { principal:"Job's Depósito", manoel:"Job's Lanches", brilhante:"Job's Bilhar" };
 let motivoPerdaAtivo = 'limpeza';
 let receitaEditandoId = null;
 let receitaPreSelecionada = null;
@@ -1246,7 +1251,7 @@ function renderMobileEstoque(){
   if(cat==='critico')ps=ps.filter(p=>{const l=lojaProduto(p);return l.atual<l.minimo});else if(cat!=='todos')ps=ps.filter(p=>p.categoria===cat);
   if(cat==='bebidas'&&(state.filtroBebidas||'todos')!=='todos')ps=ps.filter(p=>inferirSubcategoriaBebida(p)===state.filtroBebidas);
   const el=document.getElementById('mobile-stock-list');
-  el.innerHTML=ps.length?ps.map(p=>{const l=lojaProduto(p),s=statusProduto(p),pct=Math.min(100,Math.round((l.atual/Math.max(l.minimo*1.5,1))*100));return `<article class="stock-card"><div class="stock-top"><div class="product-icon">${p.icone||catEmoji(p.categoria)}</div><div class="stock-main"><div class="stock-name">${p.nome}</div><div class="stock-cat">${p.categoria} · ${p.medida} · ${p.tipo||'ambos'}</div></div><div class="stock-number ${s.c}">${l.atual}${p.medida}</div></div><div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${s.c==='red'?'#ef4444':s.c==='gold'?'#f59e0b':'#22c55e'}"></div></div><div class="stock-controls"><button class="qty-btn" onclick="ajustarEstoque(${p.id},-1)">−</button><input class="qty-input" type="number" value="${l.atual}" min="0" step="0.5" onchange="setEstoque(${p.id},this.value)" onfocus="this.select()"><button class="qty-btn" onclick="ajustarEstoque(${p.id},1)">+</button><button class="edit-btn" onclick="abrirEditarProduto(${p.id})">✎</button></div></article>`}).join(''):'<div class="empty" style="padding:40px 10px;color:var(--muted)">Nenhum produto encontrado.</div>';
+  el.innerHTML=ps.length?ps.map(p=>{const l=lojaProduto(p),s=statusProduto(p),pct=Math.min(100,Math.round((l.atual/Math.max(l.minimo*1.5,1))*100));return `<article class="stock-card"><div class="stock-top"><div class="product-icon">${p.icone||catEmoji(p.categoria)}</div><div class="stock-main"><div class="stock-name">${p.nome}</div><div class="stock-cat">${p.categoria} · ${p.medida} · ${p.tipo||'ambos'}${p.observacao&&/confirmar/i.test(p.observacao)?' · ⚠️ A CONFIRMAR':''}</div></div><div class="stock-number ${s.c}">${l.atual}${p.medida}</div></div><div class="stock-bar"><div class="stock-bar-fill" style="width:${pct}%;background:${s.c==='red'?'#ef4444':s.c==='gold'?'#f59e0b':'#22c55e'}"></div></div><div class="stock-controls"><button class="qty-btn" onclick="ajustarEstoque(${p.id},-1)">−</button><input class="qty-input" type="number" value="${l.atual}" min="0" step="0.5" onchange="setEstoque(${p.id},this.value)" onfocus="this.select()"><button class="qty-btn" onclick="ajustarEstoque(${p.id},1)">+</button><button class="edit-btn" onclick="abrirEditarProduto(${p.id})">✎</button></div></article>`}).join(''):'<div class="empty" style="padding:40px 10px;color:var(--muted)">Nenhum produto encontrado.</div>';
 }
 function filterEstoque(cat,btn){state.filtroEstoque=cat;if(cat!=='bebidas')state.filtroBebidas='todos';document.querySelectorAll('#mobile-categories .tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(cat==='bebidas'){document.querySelectorAll('#mobile-beverage-categories .tab').forEach((b,i)=>b.classList.toggle('active',i===0))}renderMobileEstoque()}
 function searchEstoque(v){state.searchEstoque=v;if(!String(v||'').trim()){state.filtroEstoque='todos';state.filtroBebidas='todos';document.querySelectorAll('#mobile-categories .tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.querySelectorAll('#mobile-beverage-categories .tab').forEach((b,i)=>b.classList.toggle('active',i===0))}renderMobileEstoque()}
@@ -1260,6 +1265,28 @@ async function excluirProdutoEditando(){
   state.produtos=state.produtos.filter(x=>Number(x.id)!==id);
   (state.receitas||[]).forEach(r=>{r.ingredientes=(r.ingredientes||[]).filter(i=>Number(i.produtoId)!==id);if(Number(r.produtoFinalId)===id)r.produtoFinalId=null});
   addHistorico('exclusao',unidadeAtiva,`Produto excluído: ${p.nome}`,'#ef4444');await save();closeModal('modal-editar-produto');renderMobileEstoque();renderMobileDashboard();renderReceitas();showToast('success',`Produto ${p.nome} excluído.`);
+}
+
+function abrirSaidaMobile(){
+  const sel=document.getElementById('saida-produto');
+  const ps=produtosUnidade().filter(p=>lojaProduto(p).ativo);
+  sel.innerHTML='<option value="">Selecione o produto</option>'+ps.map(p=>`<option value="${Number(p.id)}">${p.nome} — ${lojaProduto(p).atual}${p.medida} disponíveis</option>`).join('');
+  document.getElementById('saida-mobile-unidade').textContent=nomeUnidadeAtiva();
+  document.getElementById('saida-qtd').value='';document.getElementById('saida-obs').value='';
+  openModal('modal-saida-mobile');
+}
+async function confirmarSaidaMobile(){
+  const id=Number(document.getElementById('saida-produto').value), qtdRaw=document.getElementById('saida-qtd').value.trim(), qtd=Number(qtdRaw), obs=document.getElementById('saida-obs').value.trim();
+  const p=state.produtos.find(x=>Number(x.id)===id);
+  if(!p){showToast('error','Selecione um produto válido.');return;}
+  if(!qtdRaw||!Number.isFinite(qtd)||qtd<=0){showToast('error','Informe uma quantidade maior que zero.');return;}
+  const l=lojaProduto(p), antes=Number(l.atual)||0;
+  if(qtd>antes){showToast('error',`Estoque insuficiente. Disponível: ${antes} ${p.medida}.`);return;}
+  l.atual=Number((antes-qtd).toFixed(3));l.ativo=true;
+  addHistorico('saida',unidadeAtiva,`Saída/venda: ${p.nome} -${qtd}${p.medida} (${antes}→${l.atual}${p.medida})${obs?' — '+obs:''}`,'#ef4444');
+  const ok=await save();
+  if(!ok){l.atual=antes;state.historico.shift();showToast('error','Falha ao salvar a saída. O estoque foi restaurado.');return;}
+  closeModal('modal-saida-mobile');renderMobileEstoque();renderMobileDashboard();showToast('success',`Saída registrada: ${p.nome}, ${qtd}${p.medida}.`);
 }
 
 // === RECEITAS / PRODUÇÃO / PERDAS ===
@@ -1331,6 +1358,9 @@ function selecionarTipoNovo(tipo){
   document.querySelectorAll('#modal-cadastrar-produto .type-choice').forEach(b=>b.classList.toggle('active',b.dataset.tipo===tipo));
 }
 async function salvarNovoProduto(){
+  state.produtos=(Array.isArray(state.produtos)?state.produtos:[]).filter(p=>p&&typeof p==='object'&&!Array.isArray(p));
+  const snapshot=JSON.stringify(state);
+  try{
   const nomeEl=document.getElementById('np-nome');
   const categoriaEl=document.getElementById('np-categoria');
   const medidaEl=document.getElementById('np-medida');
@@ -1348,15 +1378,17 @@ async function salvarNovoProduto(){
   const categoria=categoriaEl?.value||'outros';
   const subcategoria=categoria==='bebidas'?(document.getElementById('np-subcategoria')?.value||'outros'):'';
   const medida=medidaEl?.value||'un';
-  const atual=Math.max(0,parseFloat(atualEl?.value)||0);
-  const minimo=Math.max(0,parseFloat(minimoEl?.value)||0);
+  const atualRaw=String(atualEl?.value??'').trim(), minimoRaw=String(minimoEl?.value??'').trim();
+  const atual=Number(atualRaw), minimo=Number(minimoRaw);
+  if(atualRaw===''||!Number.isFinite(atual)||atual<0){showToast('error','Informe um estoque inicial válido (zero ou maior).');atualEl?.focus();return;}
+  if(minimoRaw===''||!Number.isFinite(minimo)||minimo<0){showToast('error','Informe um mínimo válido (zero ou maior).');minimoEl?.focus();return;}
   const icone=(iconeEl?.value||'').trim();
 
   // Se o produto já veio do Supabase, não cria duplicado.
   // Reutiliza o cadastro existente e configura a loja atualmente selecionada.
-  const existente=state.produtos.find(p=>String(p.nome||'').trim().toLowerCase()===nome.toLowerCase());
+  const existente=state.produtos.find(p=>p && String(p.nome||'').trim().toLowerCase()===nome.toLowerCase() && String(p.medida||'un')===medida);
   if(existente){
-    normalizarProduto(existente);
+    Object.assign(existente,normalizarProduto(existente));
     existente.categoria=categoria;
     existente.subcategoria=subcategoria;
     existente.medida=medida;
@@ -1367,7 +1399,7 @@ async function salvarNovoProduto(){
     existente.lojas[unidadeAtiva]={ativo:true,atual,minimo};
     addHistorico('entrada',unidadeAtiva,`Produto já cadastrado: ${nome} — cadastro atualizado`,'#3b82f6');
     const salvo = await save();
-    if (!salvo) { showToast('error','Não foi possível salvar. O cadastro continua aberto; tente novamente.'); return; }
+    if (!salvo) { state=JSON.parse(snapshot); window.EUVI_STATE=state; showToast('error','Não foi possível salvar. O cadastro continua aberto; tente novamente.'); return; }
     closeModal('modal-cadastrar-produto');
     renderMobileEstoque();
     renderMobileDashboard();
@@ -1385,7 +1417,7 @@ async function salvarNovoProduto(){
   addHistorico('entrada',unidadeAtiva,`Produto cadastrado: ${nome}`,'#3b82f6');
   const salvo = await save();
   if (!salvo) {
-    state.produtos = state.produtos.filter(p => Number(p.id) !== Number(id));
+    state=JSON.parse(snapshot); window.EUVI_STATE=state;
     showToast('error','Não foi possível salvar. O cadastro continua aberto; tente novamente.');
     return;
   }
@@ -1393,10 +1425,15 @@ async function salvarNovoProduto(){
   renderMobileEstoque();
   renderMobileDashboard();
   showToast('success',`${nome} cadastrado!`);
+  }catch(error){
+    try{state=JSON.parse(snapshot);window.EUVI_STATE=state;}catch(_){}
+    console.error('Erro ao cadastrar produto:',error);
+    showToast('error','Falha ao cadastrar produto. Confira os campos e tente novamente.');
+  }
 }
 
 // === ESTOQUE: ENTRADA / GERAR LISTA ===
-function nomeUnidadeAtiva(){return unidadeAtiva==='principal'?'Loja Principal':unidadeAtiva==='manoel'?'Manoel':'Brilhante'}
+function nomeUnidadeAtiva(){return unidadeAtiva==='principal'?"Job's Depósito":unidadeAtiva==='manoel'?"Job's Lanches":"Job's Bilhar"}
 function criarLinhaEntradaMobile(item={}){
   const box=document.getElementById('entrada-itens-mobile');
   const row=document.createElement('div');
@@ -1558,39 +1595,103 @@ instalarSeletoresEscuros();
 
 function configuracaoAtual(){
   state.config=state.config||{};
-  state.config.nomeApp=state.config.nomeApp||'Euvi Gestão';
-  state.config.lojas={principal:'Loja Principal',manoel:'Manoel',brilhante:'Brilhante',...(state.config.lojas||{})};
+  state.config.nomeApp='Euvi Gestão';
+  const lojas=state.config.lojas||{};
+  const nomeUnidade=(valor,legado,novo)=>!valor||String(valor).trim().toLowerCase()===legado.toLowerCase()?novo:valor;
+  state.config.lojas={
+    principal:nomeUnidade(lojas.principal,'loja principal',"Job's Depósito"),
+    manoel:nomeUnidade(lojas.manoel,'manoel',"Job's Lanches"),
+    brilhante:nomeUnidade(lojas.brilhante,'brilhante',"Job's Bilhar")
+  };
   return state.config;
 }
 function atualizarNomesLojasUI(){
   const cfg=configuracaoAtual();
   const sel=document.getElementById('unidade-select');
-  if(sel) [...sel.options].forEach(o=>{if(cfg.lojas[o.value])o.textContent=cfg.lojas[o.value]});
-  document.querySelector('.topbar-title').textContent=cfg.nomeApp;
-  const activeLabel=document.getElementById('entrada-mobile-unidade');if(activeLabel)activeLabel.textContent=cfg.lojas[unidadeAtiva]||'Loja Principal';
+  if(sel)[...sel.options].forEach(o=>{if(cfg.lojas[o.value])o.textContent=cfg.lojas[o.value]});
+  const title=document.querySelector('.topbar-title');if(title)title.textContent=cfg.nomeApp;
+  const activeLabel=document.getElementById('entrada-mobile-unidade');if(activeLabel)activeLabel.textContent=cfg.lojas[unidadeAtiva]||"Job's Depósito";
 }
 function abrirConfiguracoes(){
   const cfg=configuracaoAtual();
-  document.getElementById('cfg-nome-app').value=cfg.nomeApp;
   document.getElementById('cfg-loja-principal').value=cfg.lojas.principal;
   document.getElementById('cfg-loja-manoel').value=cfg.lojas.manoel;
   document.getElementById('cfg-loja-brilhante').value=cfg.lojas.brilhante;
   openModal('modal-configuracoes');
 }
 async function salvarConfiguracoes(){
-  const nome=document.getElementById('cfg-nome-app').value.trim();
   const principal=document.getElementById('cfg-loja-principal').value.trim();
   const manoel=document.getElementById('cfg-loja-manoel').value.trim();
   const brilhante=document.getElementById('cfg-loja-brilhante').value.trim();
-  if(!nome||!principal||!manoel||!brilhante){showToast('error','Preencha o nome do aplicativo e das três lojas.');return}
-  state.config={nomeApp:nome,lojas:{principal,manoel,brilhante}};
+  if(!principal||!manoel||!brilhante){showToast('error','Preencha os nomes das três unidades.');return}
+  state.config={...(state.config||{}),nomeApp:'Euvi Gestão',lojas:{principal,manoel,brilhante}};
   const ok=await save();if(!ok)return;
-  atualizarNomesLojasUI();closeModal('modal-configuracoes');showToast('success','Configurações salvas neste ambiente.');
+  atualizarNomesLojasUI();closeModal('modal-configuracoes');showToast('success','Configurações salvas.');
 }
 
-async function initMobile(){
+const PRODUTOS_BEBIDAS_JOB = [{"nome":"Corona Extra (330 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":65,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 330 ml"},{"nome":"Heineken (330 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":52,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 330 ml"},{"nome":"Amstel Lager (350 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":300,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 350 ml"},{"nome":"Budweiser (anotado como “Bud”) (473 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":14,"minimo":0,"icone":"🍺","observacao":"Nome anotado como Bud; confirmar"},{"nome":"Brahma Chopp (269 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":576,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 269 ml"},{"nome":"Skol (269 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":687,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 269 ml"},{"nome":"Itaipava (269 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":112,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 269 ml"},{"nome":"Crystal (350 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":88,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 350 ml"},{"nome":"Original (300 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":379,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 300 ml"},{"nome":"Amstel (600 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":88,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 600 ml"},{"nome":"Skol (600 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":496,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 600 ml"},{"nome":"Original (600 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":334,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 600 ml"},{"nome":"Skol (300 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":746,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 300 ml"},{"nome":"Brahma (300 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"cervejas","atual":261,"minimo":0,"icone":"🍺","observacao":"Medida original informada: 300 ml"},{"nome":"2 Segundos","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":25,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Bardô Suave","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":1,"minimo":0,"icone":"🍾","observacao":"NOME A CONFIRMAR; medida não informada"},{"nome":"Cachaça Amansa","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":12,"minimo":0,"icone":"🍾","observacao":"NOME A CONFIRMAR; medida não informada"},{"nome":"Vodka","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":13,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Presidente","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":3,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Jamel","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":3,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Gin Strawberry (morango)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":10,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Gin Melancia","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":7,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Gin Uva","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":4,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Gin Tropical","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":4,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Coquinho Jafina","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":3,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Olden Wack","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":1,"minimo":0,"icone":"🍾","observacao":"NOME A CONFIRMAR; medida não informada"},{"nome":"Catuaba","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":20,"minimo":0,"icone":"🍾","observacao":"Medida não informada; total consolidado de 19 + 1"},{"nome":"Gin Laranja [anotação pode mencionar maracujá]","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":6,"minimo":0,"icone":"🍾","observacao":"NOME/SABOR A CONFIRMAR; medida não informada"},{"nome":"Golf Licores Peppermint","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":1,"minimo":0,"icone":"🍾","observacao":"NOME A CONFIRMAR; medida não informada"},{"nome":"Fanta Uva (2 L)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":4,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 2 L"},{"nome":"Fanta (2 L)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":4,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 2 L"},{"nome":"Coca-Cola (2 L)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":19,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 2 L"},{"nome":"Sprite (2 L)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":6,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 2 L"},{"nome":"Coca-Cola (600 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":13,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 600 ml"},{"nome":"Red Bull (250 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":11,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 250 ml"},{"nome":"Red Bull (473 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":4,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 473 ml"},{"nome":"Schweppes","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":8,"minimo":0,"icone":"🥤","observacao":"Medida não informada"},{"nome":"Fanta (350 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":16,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 350 ml"},{"nome":"Sprite (350 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":18,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 350 ml"},{"nome":"Coca-Cola (350 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":17,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 350 ml"},{"nome":"Monster (473 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":2,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 473 ml"},{"nome":"Água sem gás (500 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":9,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 500 ml"},{"nome":"Água com gás","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":29,"minimo":0,"icone":"🥤","observacao":"Medida não informada"},{"nome":"Coca-Cola (1 L)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"refrigerantes","atual":164,"minimo":0,"icone":"🥤","observacao":"Medida original informada: 1 L"},{"nome":"Cachaça branca","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":2,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"San Martin (1,4 L)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":3,"minimo":0,"icone":"🍾","observacao":"Medida original informada: 1.4 L"},{"nome":"Dom Bosco (750 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":1,"minimo":0,"icone":"🍾","observacao":"Medida original informada: 750 ml"},{"nome":"Coquinho Jafina (935 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":5,"minimo":0,"icone":"🍾","observacao":"Quantidade consolidada de duas linhas: 2 + 3"},{"nome":"Banaminha Jafina (935 ml)","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":4,"minimo":0,"icone":"🍾","observacao":"NOME A CONFIRMAR"},{"nome":"Smirnoff","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":1,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Blended Whisky GP13","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":0,"minimo":0,"icone":"🍾","observacao":"A CONFIRMAR: descrição e quantidade ilegíveis"},{"nome":"Corona Mango","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":4,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"O Último Golpe","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":0,"minimo":0,"icone":"🍾","observacao":"A CONFIRMAR: nome e quantidade ilegíveis"},{"nome":"Néctar da Coragem","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":4,"minimo":0,"icone":"🍾","observacao":"Medida não informada"},{"nome":"Boca Preta / Red...","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":8,"minimo":0,"icone":"🍾","observacao":"A CONFIRMAR: nome incompleto; medida não informada"},{"nome":"C4 Velho Barreiro","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":2,"minimo":0,"icone":"🍾","observacao":"NOME A CONFIRMAR; medida não informada"},{"nome":"Mac Sellers","categoria":"bebidas","medida":"un","tipo":"mp","subcategoria":"outros","atual":0,"minimo":0,"icone":"🍾","observacao":"A CONFIRMAR: nome e quantidade ilegíveis"}];
+\nfunction aplicarMigracaoBebidasJob(){
+  let changed=false;
+  const configBefore=JSON.stringify(state.config||{});
+  if(!Array.isArray(state.produtos)) state.produtos=[];
+  // Remove buracos e valores inválidos deixados por arrays antigos ou estados interrompidos.
+  const validos=state.produtos.filter(p=>p && typeof p==='object' && !Array.isArray(p));
+  if(validos.length!==state.produtos.length){state.produtos=validos;changed=true;}
+
+  for(const item of PRODUTOS_BEBIDAS_JOB){
+    const chaveNome=String(item.nome||'').trim().toLowerCase();
+    let p=state.produtos.find(x=>x && String(x.nome||'').trim().toLowerCase()===chaveNome && String(x.medida||'un')===String(item.medida||'un'));
+    if(!p){
+      const id=state.produtos.reduce((m,x)=>Math.max(m,Number(x?.id)||0),0)+1;
+      p={id,nome:item.nome,categoria:item.categoria,medida:item.medida,tipo:item.tipo,subcategoria:item.subcategoria,icone:item.icone,observacao:item.observacao,
+        lojas:{principal:lojaDefault(false),manoel:lojaDefault(false),brilhante:lojaDefault(false)}};
+      state.produtos.push(p);changed=true;
+    }else{
+      if(!p.categoria){p.categoria=item.categoria;changed=true;}
+      if(!p.subcategoria && item.subcategoria){p.subcategoria=item.subcategoria;changed=true;}
+      if(!p.icone && item.icone){p.icone=item.icone;changed=true;}
+      if(!p.observacao && item.observacao){p.observacao=item.observacao;changed=true;}
+      if(!p.medida){p.medida=item.medida;changed=true;}
+    }
+
+    if(!p.lojas || typeof p.lojas!=='object'){
+      p.lojas={principal:lojaDefault(false),manoel:lojaDefault(false),brilhante:lojaDefault(false)};changed=true;
+    }
+    for(const u of ['principal','manoel','brilhante']){
+      if(!p.lojas[u] || typeof p.lojas[u]!=='object'){
+        p.lojas[u]=lojaDefault(false);changed=true;
+      }
+      // Only initialize a unit that has not yet been enrolled for this product;
+      // do not overwrite a valid stock count on subsequent launches.
+      if(p.lojas[u].ativo!==true){
+        p.lojas[u]={ativo:true,atual:Number(item.atual)||0,minimo:Number(item.minimo)||0};changed=true;
+      }
+    }
+    // Persist normalized schema but keep the extra catalog metadata.
+    const normalized=normalizarProduto(p);
+    p.lojas=normalized.lojas;
+    p.id=normalized.id;
+    p.nome=normalized.nome;
+    p.categoria=normalized.categoria;
+    p.medida=normalized.medida;
+    p.tipo=normalized.tipo;
+    p.icone=normalized.icone;
+    p.subcategoria=item.subcategoria || p.subcategoria || '';
+    p.observacao=item.observacao || p.observacao || '';
+  }
+  const antigas=(state.config&&state.config.lojas)||{};
+  const nomeUnidade=(valor,legado,novo)=>!valor||String(valor).trim().toLowerCase()===legado.toLowerCase()?novo:valor;
+  state.config={...(state.config||{}),nomeApp:'Euvi Gestão',lojas:{
+    principal:nomeUnidade(antigas.principal,'loja principal',"Job's Depósito"),
+    manoel:nomeUnidade(antigas.manoel,'manoel',"Job's Lanches"),
+    brilhante:nomeUnidade(antigas.brilhante,'brilhante',"Job's Bilhar")
+  }};
+  if(JSON.stringify(state.config)!==configBefore)changed=true;
+  window.EUVI_STATE=state;
+  return changed;
+}\n\nasync function initMobile(){
   unidadeAtiva='principal';window.unidadeAtiva='principal';
-  const defaults={produtos:produtosIniciais,listas:{manoel:[],brilhante:[]},producao:[],perdas:[],receitas:[],contagens:contagensIniciais,historico:historicoInicial,config:{nomeApp:'Euvi Gestão',lojas:{principal:'Loja Principal',manoel:'Manoel',brilhante:'Brilhante'}},filtroEstoque:'todos',searchEstoque:'',lojaFiltro:'principal'};
+  const defaults={produtos:produtosIniciais,listas:{manoel:[],brilhante:[]},producao:[],perdas:[],receitas:[],contagens:contagensIniciais,historico:historicoInicial,config:{nomeApp:'Euvi Gestão',lojas:{principal:"Job's Depósito",manoel:"Job's Lanches",brilhante:"Job's Bilhar"}},filtroEstoque:'todos',searchEstoque:'',lojaFiltro:'principal'};
   if(EUVI_LOCAL_PREVIEW){
     try{
       const saved=localStorage.getItem(EUVI_LOCAL_KEY);
@@ -1612,6 +1713,14 @@ async function initMobile(){
     showToast('info','Prévia local: alterações ficam salvas somente neste navegador.');
   }else{
     try{state=await EuviPersistence.carregar(defaults,'admin');window.EUVI_STATE=state}catch(e){console.error(e);resetState();state.receitas=state.receitas||[];state.perdas=state.perdas||[];showToast('error','Não foi possível sincronizar com o Supabase.')}
+  }
+  // Sanitiza dados antigos antes de qualquer rotina que consulte p.nome.
+  state.produtos=(Array.isArray(state.produtos)?state.produtos:[]).filter(p=>p&&typeof p==='object'&&!Array.isArray(p));
+  window.EUVI_STATE=state;
+  const migrado=aplicarMigracaoBebidasJob();
+  if(migrado){
+    const salvo=await save();
+    if(!salvo)showToast('error','Bebidas preparadas, mas não foi possível gravar no banco. Verifique a conexão e recarregue.');
   }
   atualizarNomesLojasUI();renderMobileDashboard();renderMobileEstoque();renderReceitas();renderProducaoMobile();renderPerdas();
 }
