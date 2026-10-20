@@ -53,7 +53,7 @@
   .placeholder{min-height:55vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}.placeholder-icon{font-size:48px;margin-bottom:14px}.placeholder h2{font-size:24px;margin-bottom:8px}.placeholder p{color:var(--muted);font-size:15px}
   .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:78px;background:rgba(18,18,18,.98);border-top:1px solid var(--border);z-index:110;display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px env(safe-area-inset-bottom)}
   .bottom-btn{border:0;background:transparent;color:#858585;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:650}.bottom-btn .bn-icon{font-size:21px;line-height:1}.bottom-btn.active{color:var(--accent)}
-  .toast{position:fixed;left:14px;right:14px;bottom:94px;background:#202020;border:1px solid var(--border);border-radius:14px;padding:14px 16px;font-size:13px;font-weight:650;z-index:300;transform:translateY(130px);opacity:0;transition:.25s}.toast.show{transform:translateY(0);opacity:1}.toast.success{border-color:var(--green)}.toast.error{border-color:var(--accent)}
+  .toast{position:fixed;left:50%;right:auto;bottom:94px;width:min(520px,calc(100% - 28px));background:#202020;border:1px solid var(--border);border-radius:14px;padding:14px 16px;font-size:13px;font-weight:650;line-height:1.4;z-index:1200;transform:translate(-50%,130px);opacity:0;transition:transform .25s ease,opacity .25s ease;box-shadow:0 12px 32px rgba(0,0,0,.35);pointer-events:none}.toast.show{transform:translate(-50%,0);opacity:1}.toast.success{border-color:var(--green)}.toast.error{border-color:var(--accent)}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center;z-index:250;padding:10px}.modal-overlay.open{display:flex}.modal{width:min(100%,620px);max-height:90vh;overflow:auto;background:#191919;border:1px solid var(--border);border-radius:20px 20px 10px 10px}.modal-header{padding:17px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}.modal-title{font-size:17px;font-weight:750}.modal-close{width:42px;height:42px;border:0;background:#242424;color:#fff;border-radius:12px;font-size:24px}.modal-body{padding:17px}.modal-footer{padding:14px 17px;border-top:1px solid var(--border);display:flex;gap:9px}.modal-footer .btn{flex:1}.form-row,.form-row-2{margin-bottom:14px}.input-label{display:block;color:#ccc;font-size:12px;font-weight:650;margin-bottom:7px}.input-field,.select-field{width:100%;height:48px;background:#151515;border:1px solid var(--border);border-radius:12px;color:#fff;padding:0 13px;outline:0}.input-field:focus,.select-field:focus{border-color:var(--accent)}
   .legacy-hide{display:none!important}
   @media(min-width:701px){.content{padding-left:22px;padding-right:22px}.bottom-nav{max-width:760px;left:50%;transform:translateX(-50%);border-left:1px solid var(--border);border-right:1px solid var(--border)}}
@@ -376,6 +376,18 @@
   window.EuviPersistence = { carregar, salvar, normalizarProduto, normalizarPayload, attachAll };
 })();
 </script><script>
+// Compatibilidade pública para as funções usadas pelos módulos do aplicativo.
+// As implementações originais ficam isoladas dentro de EuviPersistence.
+function lojaDefault(ativo){
+  return {ativo:!!ativo, atual:0, minimo:0};
+}
+function normalizarProduto(raw){
+  if(!window.EuviPersistence || typeof window.EuviPersistence.normalizarProduto!=='function'){
+    throw new Error('Módulo de persistência ainda não foi inicializado.');
+  }
+  return window.EuviPersistence.normalizarProduto(raw);
+}
+
 // ==================== STATE ====================
 let state = {
   produtos: [],
@@ -560,8 +572,9 @@ async function save() {
     window.EUVI_STATE = state;
     return true;
   } catch (e) {
-    console.error(e);
-    showToast('error', EUVI_LOCAL_PREVIEW ? 'Não foi possível salvar neste navegador.' : 'Falha ao salvar no Supabase.');
+    console.error('[Euvi Gestão] Falha na persistência:',e);
+    const detalhe=String(e?.message||'erro de conexão ou permissão').slice(0,140);
+    showToast('error', EUVI_LOCAL_PREVIEW ? 'Não foi possível salvar neste navegador.' : `Falha ao salvar no Supabase: ${detalhe}`);
     return false;
   }
 }
@@ -1427,8 +1440,9 @@ async function salvarNovoProduto(){
   showToast('success',`${nome} cadastrado!`);
   }catch(error){
     try{state=JSON.parse(snapshot);window.EUVI_STATE=state;}catch(_){}
-    console.error('Erro ao cadastrar produto:',error);
-    showToast('error','Falha ao cadastrar produto. Confira os campos e tente novamente.');
+    console.error('[Euvi Gestão] Erro ao cadastrar produto:',error);
+    const detalhe=String(error?.message||'erro inesperado').slice(0,140);
+    showToast('error',`Falha ao cadastrar: ${detalhe}`);
   }
 }
 
@@ -1719,10 +1733,15 @@ async function initMobile(){
   // Sanitiza dados antigos antes de qualquer rotina que consulte p.nome.
   state.produtos=(Array.isArray(state.produtos)?state.produtos:[]).filter(p=>p&&typeof p==='object'&&!Array.isArray(p));
   window.EUVI_STATE=state;
-  const migrado=aplicarMigracaoBebidasJob();
-  if(migrado){
-    const salvo=await save();
-    if(!salvo)showToast('error','Bebidas preparadas, mas não foi possível gravar no banco. Verifique a conexão e recarregue.');
+  try{
+    const migrado=aplicarMigracaoBebidasJob();
+    if(migrado){
+      const salvo=await save();
+      if(!salvo)showToast('error','Bebidas preparadas, mas não foi possível gravar no banco. Verifique a conexão e recarregue.');
+    }
+  }catch(error){
+    console.error('[Euvi Gestão] Falha na migração inicial:',error);
+    showToast('error',`Falha ao preparar produtos: ${String(error?.message||'erro inesperado').slice(0,140)}`);
   }
   atualizarNomesLojasUI();renderMobileDashboard();renderMobileEstoque();renderReceitas();renderProducaoMobile();renderPerdas();
 }
