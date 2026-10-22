@@ -202,7 +202,7 @@
 <div class="form-row"><label class="input-label">Observação <span style="color:var(--muted)">(opcional)</span></label><textarea class="input-field" id="entrada-obs-mobile" maxlength="100" style="height:76px;padding-top:12px;resize:none"></textarea></div>
 </div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-entrada-mobile')">Cancelar</button><button class="btn btn-green" onclick="confirmarEntradaMobile()">Adicionar entrada</button></div></div></div>
 <div class="modal-overlay" id="modal-lista-mobile"><div class="modal"><div class="modal-header"><div><div class="modal-title">Gerar lista de compras</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Itens abaixo do mínimo · <span id="lista-mobile-unidade">Loja Principal</span></div></div><button class="modal-close" onclick="closeModal('modal-lista-mobile')">×</button></div><div class="modal-body"><div id="lista-mobile-itens"></div><div id="lista-mobile-vazia" class="empty" style="display:none;padding:20px 5px;text-align:center;color:var(--green)">✓ Nenhum item abaixo do mínimo.</div></div><div class="modal-footer sheet-actions"><button class="btn" onclick="closeModal('modal-lista-mobile')">Fechar</button><button class="btn btn-green" onclick="enviarListaWhatsAppMobile()">WhatsApp</button></div></div></div>
-<div class="modal-overlay" id="modal-saida-mobile"><div class="modal"><div class="modal-header"><div><div class="modal-title">Registrar saída / venda</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Unidade: <strong id="saida-mobile-unidade">Job's Depósito</strong></div></div><button class="modal-close" onclick="closeModal('modal-saida-mobile')">×</button></div><div class="modal-body"><div class="form-row"><label class="input-label" for="saida-produto">Produto</label><select class="select-field" id="saida-produto"></select></div><div class="form-row"><label class="input-label" for="saida-qtd">Quantidade vendida</label><input class="input-field" id="saida-qtd" type="number" min="0.001" step="0.001" placeholder="Informe a quantidade"></div><div class="form-row"><label class="input-label" for="saida-obs">Observação (opcional)</label><input class="input-field" id="saida-obs" maxlength="120" placeholder="Ex.: venda balcão"></div></div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-saida-mobile')">Cancelar</button><button class="btn btn-primary" onclick="confirmarSaidaMobile()">Registrar saída</button></div></div></div>
+<div class="modal-overlay" id="modal-saida-mobile"><div class="modal"><div class="modal-header"><div><div class="modal-title">Registrar saída / venda</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Unidade: <strong id="saida-mobile-unidade">Job's Depósito</strong></div></div><button class="modal-close" onclick="closeModal('modal-saida-mobile')">×</button></div><div class="modal-body"><div class="form-row"><label class="input-label" for="saida-produto-search">Produto</label><div class="search-picker" id="saida-produto-picker"><input class="picker-input" id="saida-produto-search" type="text" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="saida-produto-menu" placeholder="Pesquisar produto pelo nome..."><input type="hidden" id="saida-produto" value=""><div class="picker-menu" id="saida-produto-menu" role="listbox"></div></div></div><div class="form-row"><label class="input-label" for="saida-qtd">Quantidade vendida</label><input class="input-field" id="saida-qtd" type="number" min="0.001" step="0.001" placeholder="Informe a quantidade"></div><div class="form-row"><label class="input-label" for="saida-obs">Observação (opcional)</label><input class="input-field" id="saida-obs" maxlength="120" placeholder="Ex.: venda balcão"></div></div><div class="modal-footer"><button class="btn" onclick="closeModal('modal-saida-mobile')">Cancelar</button><button class="btn btn-primary" onclick="confirmarSaidaMobile()">Registrar saída</button></div></div></div>
 <div class="modal-overlay" id="modal-cadastrar-produto"><div class="modal"><div class="modal-header"><div class="modal-title">Cadastrar produto</div><button class="modal-close" onclick="closeModal('modal-cadastrar-produto')">×</button></div><div class="modal-body">
 <div class="form-row"><label class="input-label">Nome</label><input class="input-field" id="np-nome" placeholder="Ex.: Salsicha"></div>
 <div class="form-row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="input-label">Categoria</label><select class="select-field" id="np-categoria" onchange="alternarSubcategoriaBebida('np')"><option value="carnes">Carnes</option><option value="frios">Frios</option><option value="verduras">Verduras</option><option value="mercado">Mercado</option><option value="embalagem">Embalagem</option><option value="bebidas">Bebidas</option><option value="outros" selected>Outros</option></select></div><div><label class="input-label">Medida</label><select class="select-field" id="np-medida"><option value="un" selected>unidade (un)</option><option value="kg">quilograma (kg)</option><option value="g">grama (g)</option><option value="mg">miligrama (mg)</option><option value="L">litro (L)</option><option value="ml">mililitro (ml)</option><option value="cx">caixa (cx)</option><option value="fardo">fardo</option><option value="pct">pacote (pct)</option><option value="pacote">pacote</option><option value="dz">dúzia (dz)</option><option value="garrafa">garrafa</option><option value="lata">lata</option></select></div></div>
@@ -1281,11 +1281,24 @@ async function excluirProdutoEditando(){
 }
 
 function abrirSaidaMobile(){
-  const sel=document.getElementById('saida-produto');
   const ps=produtosUnidade().filter(p=>lojaProduto(p).ativo);
-  sel.innerHTML='<option value="">Selecione o produto</option>'+ps.map(p=>`<option value="${Number(p.id)}">${p.nome} — ${lojaProduto(p).atual}${p.medida} disponíveis</option>`).join('');
+  const picker=setupSearchPicker(
+    'saida-produto-picker',
+    'saida-produto-search',
+    'saida-produto-menu',
+    ps,
+    p=>p.id,
+    p=>`${p.nome} — ${lojaProduto(p).atual}${p.medida} disponíveis`,
+    'Pesquisar produto pelo nome...',
+    ()=>{},
+    'Nenhum produto encontrado nesta unidade'
+  );
+  if(picker)picker._pickerClear();
+  const input=document.getElementById('saida-produto-search');
+  if(input){input.value='';input.setAttribute('aria-expanded','false');}
   document.getElementById('saida-mobile-unidade').textContent=nomeUnidadeAtiva();
-  document.getElementById('saida-qtd').value='';document.getElementById('saida-obs').value='';
+  document.getElementById('saida-qtd').value='';
+  document.getElementById('saida-obs').value='';
   openModal('modal-saida-mobile');
 }
 async function confirmarSaidaMobile(){
